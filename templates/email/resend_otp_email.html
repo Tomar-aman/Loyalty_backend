@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Resend OTP Code</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 30px;">
+    <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+        <h2 style="color: #333;">Here's your new OTP</h2>
+        <p style="font-size: 16px; color: #555;">
+            Hi {{ user.first_name }},<br><br>
+            You've requested a new OTP to verify your account.
+            <br><br>
+            Please use the code below to complete your verification process:
+        </p>
+        <h1 style="text-align: center; color: #000000ff;">{{ otp_code }}</h1>
+        <p style="font-size: 14px; color: #888;">
+            This OTP is valid for the next 10 minutes. If you didn't request this code, you can ignore this message.
+        </p>
+        <p style="font-size: 14px; color: #555;">
+            Regards,<br>
+            Loyalty Team
+        </p>
+    </div>
+</body>
+</html>

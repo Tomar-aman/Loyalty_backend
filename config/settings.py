@@ -50,6 +50,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Third-party apps
+    "corsheaders",
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
+    "drf_standardized_errors",
+    "drf_yasg",
+
+    # Project apps
+    'users',
+    'settings'
 ]
 
 MIDDLEWARE = [
@@ -63,6 +74,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'config.urls'
+
+AUTH_USER_MODEL = "users.User"
 
 TEMPLATES = [
     {
