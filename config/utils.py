@@ -1,4 +1,5 @@
-from django.conf import settings
+# from django.conf import settings
+from config import settings
 from django.template.loader import  get_template
 from django.core import mail 
 from django.core.mail.backends.smtp import EmailBackend
@@ -32,4 +33,5 @@ def send_mail(subject, email_template_name, context, to_email,**kwargs):
     if kwargs.items():
         email_msg.attach(kwargs['filename'], kwargs['file'].read(), 'application/pdf')
     email_msg.content_subtype = 'html'
-    mail_obj.send_me
+    mail_obj.send_messages([email_msg])
+    mail_obj.close()

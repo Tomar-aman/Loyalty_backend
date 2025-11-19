@@ -10,38 +10,38 @@ from django.core.files.base import ContentFile
 # from config.utils import initialize_firebase
 
 class SignupSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True, min_length=8)
+    email = serializers.EmailField(write_only=True, required=True)
     
     class Meta:
         model = User
         fields = [
             'first_name', 'last_name', 'email', 'phone_number',
-            'country_code', 'password'
+            'country_code',
+          
         ]
         extra_kwargs = {
-            'password': {'write_only': True},
             'email': {'validators': []}, 
         }
     
-    def validate(self, attrs):
-        # Check if email already exists
-        if User.objects.filter(email=attrs['email'].lower(), is_active=True).exists():
-            raise serializers.ValidationError({
-                "email": "Email already exists."
-            })
+    # def validate(self, attrs):
+    #     # Check if email already exists
+    #     if User.objects.filter(email=attrs['email'].lower(), is_temp=False).exists():
+    #         raise serializers.ValidationError({
+    #             "email": "Email already exists."
+    #         })
         
-        return attrs
+    #     return attrs
     
     def create(self, validated_data):
         email = validated_data.get('email').lower()
         try:
             # Check if inactive user exists with same email or phone number
-            user = User.objects.get(email=email, is_active=False)
+            user = User.objects.get(email=email)
             # Update user details
-            for attr, value in validated_data.items():
-                setattr(user, attr, value)
-            user.set_password(validated_data['password'])
-            user.save()
+            # for attr, value in validated_data.items():
+            #     setattr(user, attr, value)
+            # user.set_password(validated_data['password'])
+            # user.save()
         except User.DoesNotExist:
             user = User.objects.create_user(**validated_data)
             user.is_active = False
@@ -60,7 +60,7 @@ class SignupSerializer(serializers.ModelSerializer):
         # Send OTP
         send_mail(
             subject="Your OTP Code",
-            email_template_name="email/otp_email.html",
+            email_template_name='email/otp_email.html',
             context={"user": user, "otp_code": otp_code},
             to_email=user.email
         )
@@ -70,7 +70,6 @@ class SignupSerializer(serializers.ModelSerializer):
 
 class OTPVerificationSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
-    phone_number = serializers.CharField(required=False)
     otp_code = serializers.CharField(max_length=6)
 
     def validate(self, attrs):
@@ -135,112 +134,42 @@ class ResendOTPSerializer(serializers.Serializer):
             return otp
         except User.DoesNotExist:
             raise serializers.ValidationError("User not found.")
+        
+class CompleteSignUpSerializer(serializers.Serializer):
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
+    country_code = serializers.CharField(required=False, allow_blank=True)
+    phone_number = serializers.CharField(required=False, allow_blank=True)
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        if not user:
+            raise serializers.ValidationError("User not found.")
+        attrs['user'] = user
+        return attrs
+    
+    def create(self, validated_data):
+      instance = self.context['request'].user
+      
+      # Update remaining fields
+      for key, value in validated_data.items():
+          setattr(instance, key, value)
+
+      instance.is_temp = False
+      instance.save()
+
+      return instance
+    
 
 class UserDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
             'id', 'first_name', 'last_name', 'email', 'phone_number','profile_picture',
-            'country_code','is_active'
+            'country_code','is_active','is_temp',
         ]
-        
-class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
-    password = serializers.CharField(required=True, min_length=8)
-    
-    def create(self, validated_data):
-        email = validated_data.get('email').lower()
-        password = validated_data.get('password')
-
-        user = User.objects.filter(email=email).first()
-
-        if not user:
-            raise serializers.ValidationError({"email": "User not found."})
-        
-        if not user.check_password(password):
-            raise serializers.ValidationError({"password": "Incorrect password."})
-
-        if not user.is_active:
-            raise serializers.ValidationError({"message": "Please verify your account to login."})
-
-        return user
-
-    def save(self, **kwargs):
-        return self.create(self.validated_data)
-
-class ForgotPasswordOTPSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=False)
-    # phone_number = serializers.CharField(required=False)
-    def validate(self, attrs):
-        identifier = attrs.get('email')  # or phone_number
-        if not identifier:
-            raise serializers.ValidationError({"email":"Email is required."})
-        return attrs
-    
-    def save(self, **kwargs):
-        try:
-            user = User.objects.get(email=self.validated_data['email'])
-            # otp_code = ''.join(random.choices('0123456789', k=6))
-            otp_code = str(random.randint(100000, 999999))
-            otp = OTP.objects.create(user=user, otp_code=otp_code, expires_at=timezone.now() + timedelta(minutes=10))
-            send_mail(
-                subject="Reset Your Password - OTP Code",
-                email_template_name="email/forgot_password_otp.html",
-                context={
-                    "user": user,
-                    "otp_code": otp_code
-                },
-                to_email=user.email
-            )
-            return otp
-        except User.DoesNotExist:
-            raise serializers.ValidationError("User not found.")   
-
-class ForgotPasswordOtpVerifySerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
-    otp = serializers.CharField(required=True, min_length=6)
-
-    def validate(self, attrs):
-        user = User.objects.filter(email=attrs['email']).first()
-        if not user:
-            raise serializers.ValidationError({"email":"User not found."})
-        otp = OTP.objects.filter(user=user, otp_code=attrs['otp']).order_by('-created_at').first()
-        if not otp:
-            raise serializers.ValidationError({
-                'otp': "Invalid OTP."
-            })
-        if otp.is_expired():
-            raise serializers.ValidationError({"otp":"OTP has expired."})
-        attrs['user'] = user
-        return attrs
-
-    def save(self, **kwargs):
-        # Optionally, you can delete the OTP here
-        OTP.objects.filter(user=self.validated_data['user']).delete()
-        return self.validated_data['user']
-
-class ForgotPasswordResetSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
-    password = serializers.CharField(required=True, min_length=8)
-    confirm_password = serializers.CharField(required=True, min_length=8)
-
-    def validate(self, attrs):
-        user = User.objects.filter(email=attrs['email']).first()
-        if not user:
-            raise serializers.ValidationError({"email":"User not found."})
-        
-        if attrs['password'] != attrs['confirm_password']:
-            raise serializers.ValidationError({"confirm_password":"Passwords do not match."})
-        
-        attrs['user'] = user
-        return attrs
-
-    def save(self, **kwargs):
-        user = self.validated_data['user']
-        user.set_password(self.validated_data['confirm_password'])
-        user.save()
-        return user
-    
+         
 
 class GoogleAuthSerializer(serializers.Serializer):
     token = serializers.CharField()

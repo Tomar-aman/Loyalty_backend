@@ -59,6 +59,11 @@ class User(AbstractUser):
         null=True,
         blank=True
     )
+    is_temp = models.BooleanField(
+        _('temporary user'),
+        default=True,
+        help_text=_('Designates whether the user is a temporary user.'),
+    )
     google_id = models.CharField(
         _('google id'),
         max_length=255,

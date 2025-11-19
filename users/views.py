@@ -1,7 +1,7 @@
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
-from users.serializers import LogoutSerializer, SignupSerializer, OTPVerificationSerializer, ResendOTPSerializer, UserDetailsSerializer, LoginSerializer, ForgotPasswordOTPSerializer, ForgotPasswordOtpVerifySerializer, ForgotPasswordResetSerializer, GoogleAuthSerializer, ChangePasswordSerializer
+from users.serializers import CompleteSignUpSerializer, LogoutSerializer, SignupSerializer, OTPVerificationSerializer, ResendOTPSerializer, UserDetailsSerializer, GoogleAuthSerializer
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
@@ -39,63 +39,34 @@ class OTPVerifyView(GenericAPIView):
         if serializer.is_valid():
             user = serializer.save()
             refresh = RefreshToken.for_user(user)
-            user_data = SignupSerializer(user).data
+            user_data = UserDetailsSerializer(user).data
             user_data["refresh"] = str(refresh)
             user_data["access"] = str(refresh.access_token)
-            user_data['message'] = "OTP verified. Your account is now active."
+            if user.is_active and not user.is_temp:
+              user_data['message'] = "Login successful. Welcome back!"
+            else:
+                user_data['message'] = "OTP verified. Now Complete your profile to activate your account."
+            
             return Response(user_data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-class LoginView(GenericAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = LoginSerializer
+
+
+class CompleteSignUpView(GenericAPIView):
+    serializer_class = CompleteSignUpSerializer
 
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        user = request.user
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+
         if serializer.is_valid():
-            user = serializer.save()
-            refresh = RefreshToken.for_user(user)
+            user = serializer.create(serializer.validated_data)
             user_data = UserDetailsSerializer(user, context={'request': request}).data
-            user_data["refresh"] = str(refresh)
-            user_data["access"] = str(refresh.access_token)
-            user_data['message'] = "Login successful. Welcome back!"
+            user_data["message"] = "Profile completed successfully."
+
             return Response(user_data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-
-class ForgotpasswordOTPView(GenericAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = ForgotPasswordOTPSerializer
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "Password reset OTP sent to your email."}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class ForgotPasswordOTPVerifyView(GenericAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = ForgotPasswordOtpVerifySerializer
-
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            otp = serializer.save()
-            return Response({"message": "OTP verified. You can reset your password."}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class ForgotPasswordResetView(GenericAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = ForgotPasswordResetSerializer
-
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "Password reset successful. You can login with your new password."}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class GoogleLoginView(GenericAPIView):
     """
@@ -194,19 +165,6 @@ class ProfileView(GenericAPIView):
         serializer = self.get_serializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-class ChangePasswordView(GenericAPIView):
-    """
-    View for changing the password of the authenticated user.
-    """
-    serializer_class = ChangePasswordSerializer
-    
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "Password changed successfully."}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 class LogoutView(GenericAPIView):
     """
     View for logging out the authenticated user.
