@@ -1,0 +1,631 @@
+{% extends 'custom-admin/base.html' %}
+{% load static %}
+{% block content %}
+
+<section class="manageActivitiesPage managepadding manageallpage">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="topContent">
+          <h2 class="H2Heading">Manage Businesses</h2>
+          <button class="topContentButton" data-bs-toggle="modal" data-bs-target="#addBusinessModal">
+            <i class="fa fa-plus"></i> Add Business
+          </button>
+        </div>
+        <div class="scrollableTable">
+          <table class="customTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Owner</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for business in businesses %}
+              <tr>
+                <td>{{ business.id }}</td>
+                <td>{{ business.name }}</td>
+                <td>{{ business.owner.get_full_name }}</td>
+                <td>{{ business.category.name }}</td>
+                <td>
+                  <span class="badge {% if business.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                    {% if business.is_active %}Active{% else %}Inactive{% endif %}
+                  </span>
+                </td>
+                <td>{{ business.created_at|date:"d/m/Y H:i" }}</td>
+                <td>
+                  <button class="tableActionBtn edit-business"
+                          data-bs-toggle="modal"
+                          data-bs-target="#editBusinessModal"
+                          data-business-id="{{ business.id }}"
+                          data-name="{{ business.name|escapejs }}"
+                          data-owner-id="{{ business.owner.id }}"
+                          data-category-id="{{ business.category.id }}"
+                          data-description="{{ business.description|default_if_none:''|escapejs }}"
+                          data-address="{{ business.address|default_if_none:''|escapejs }}"
+                          data-phone-number="{{ business.phone_number|default_if_none:''|escapejs }}"
+                          data-email="{{ business.email|default_if_none:''|escapejs }}"
+                          data-website="{{ business.website|default_if_none:''|escapejs }}"
+                          data-is-active="{{ business.is_active }}"
+                          data-is-featured="{{ business.is_featured }}"
+                          data-gallery-images="{% for img in business.gallery_images.all %}{{ img.image.url }}{% if not forloop.last %}|{% endif %}{% endfor %}"
+                          data-gallery-ids="{% for img in business.gallery_images.all %}{{ img.id }}{% if not forloop.last %}|{% endif %}{% endfor %}"
+                          data-edit-url="{% url 'admin_panel:business_edit' business.id %}">
+                    <i class="fa fa-edit"></i>
+                  </button>
+                  <button class="tableActionBtn delete-business"
+                          data-bs-toggle="modal"
+                          data-bs-target="#deleteBusinessModal"
+                          data-business-id="{{ business.id }}"
+                          data-delete-url="{% url 'admin_panel:business_delete' business.id %}">
+                    <i class="fa fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="text-center">No businesses found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ========================= -->
+<!-- ADD BUSINESS MODAL -->
+<!-- ========================= -->
+
+<div class="modal fade customModal addDataModal" id="addBusinessModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h6 class="H2Heading">Add New Business</h6>
+        <button type="button" class="hideClose_Modal" data-bs-dismiss="modal">
+          <img src="{% static 'admin/images/close.png' %}" alt="" class="img-fluid">
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <form method="post" action="{% url 'admin_panel:business_add' %}"
+              enctype="multipart/form-data" id="addBusinessForm">
+
+          {% csrf_token %}
+
+          <div class="row row-gap-4">
+
+            <div class="col-md-12">
+              <label class="inputLabel">Business Name</label>
+              <input type="text" name="name" class="customInput"
+                     placeholder="Enter Business Name" required>
+            </div>
+
+            <div class="col-md-12">
+              <label class="inputLabel">Owner (Admin)</label>
+              <select name="owner" class="customInput" required>
+                <option value="">Select Owner</option>
+                {% for admin in admins %}
+                <option value="{{ admin.id }}">{{ admin.get_full_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-12">
+              <label class="inputLabel">Category</label>
+              <select name="category" class="customInput" required>
+                <option value="">Select Category</option>
+                {% for category in categories %}
+                <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-12">
+              <label class="inputLabel">Description</label>
+              <textarea name="description" class="customInput"
+                        placeholder="Enter Description" rows="2"></textarea>
+            </div>
+
+            <div class="col-md-12">
+              <label class="inputLabel">Address</label>
+              <textarea name="address" class="customInput"
+                        placeholder="Enter Address" rows="2"></textarea>
+            </div>
+
+            <div class="col-md-6">
+              <label class="inputLabel">Phone Number</label>
+              <input type="text" name="phone_number" class="customInput"
+                     placeholder="Enter Phone Number">
+            </div>
+
+            <div class="col-md-6">
+              <label class="inputLabel">Email</label>
+              <input type="email" name="email" class="customInput"
+                     placeholder="Enter Email">
+            </div>
+
+            <div class="col-md-6">
+              <label class="inputLabel">Website</label>
+              <input type="url" name="website" class="customInput"
+                     placeholder="Enter Website">
+            </div>
+
+            <div class="col-md-6">
+              <label class="inputLabel">Logo</label>
+              <input type="file" name="logo" class="customInput">
+            </div>
+
+            {% comment %} <div class="col-md-6">
+              <label class="inputLabel">Status</label>
+              <select name="is_active" class="customInput">
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="inputLabel">Featured</label>
+              <select name="is_featured" class="customInput">
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
+            </div> {% endcomment %}
+
+           <div class="col-md-12">
+            <label class="inputLabel">Gallery Images</label>
+            <div class="upload-area" id="addGalleryUploadArea">
+              <input type="file" name="gallery_images" id="addGalleryImagesInput" accept="image/*" multiple style="display: none;">
+              <div style="text-align: center; padding: 20px; border: 2px dashed #ccc; border-radius: 8px; cursor: pointer;">
+                <i class="fa fa-cloud-upload" style="font-size: 2rem; color: #667eea;"></i>
+                <p class="mt-2">Drag and drop images here or click to select</p>
+                <small class="text-muted">PNG, JPG, GIF (Max 5MB each, multiple allowed)</small>
+              </div>
+              <div id="addGalleryImagePreview" style="margin-top: 10px;">
+                <!-- Gallery image previews will appear here -->
+              </div>
+            </div>
+          </div>
+
+            <div class="modalFooter">
+              <button type="button" class="customButton" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="customButton ms-2">Add Business</button>
+            </div>
+
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ========================= -->
+<!-- EDIT BUSINESS MODAL -->
+<!-- ========================= -->
+
+<div class="modal fade customModal addDataModal" id="editBusinessModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h6 class="H2Heading">Edit Business</h6>
+        <button type="button" class="hideClose_Modal" data-bs-dismiss="modal">
+          <img src="{% static 'admin/images/close.png' %}" alt="" class="img-fluid">
+        </button>
+      </div>
+
+      <div class="modal-body">
+
+        <form method="post" id="editBusinessForm" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" id="edit_business_id" name="business_id">
+
+          <div class="row row-gap-4">
+
+            <div class="col-md-12">
+              <label class="inputLabel">Business Name</label>
+              <input type="text" id="edit_name" name="name"
+                     class="customInput" required>
+            </div>
+
+            <div class="col-md-12">
+              <label class="inputLabel">Owner (Admin)</label>
+              <select id="edit_owner" name="owner" class="customInput" required>
+                <option value="">Select Owner</option>
+                {% for admin in admins %}
+                <option value="{{ admin.id }}">{{ admin.get_full_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-12">
+              <label class="inputLabel">Category</label>
+              <select id="edit_category" name="category"
+                      class="customInput" required>
+                <option value="">Select Category</option>
+                {% for category in categories %}
+                <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-12">
+              <label class="inputLabel">Description</label>
+              <textarea id="edit_description" name="description"
+                        class="customInput" rows="2"></textarea>
+            </div>
+
+            <div class="col-md-12">
+              <label class="inputLabel">Address</label>
+              <textarea id="edit_address" name="address"
+                        class="customInput" rows="2"></textarea>
+            </div>
+
+            <div class="col-md-6">
+              <label class="inputLabel">Phone Number</label>
+              <input type="text" id="edit_phone_number"
+                     name="phone_number" class="customInput">
+            </div>
+
+            <div class="col-md-6">
+              <label class="inputLabel">Email</label>
+              <input type="email" id="edit_email"
+                     name="email" class="customInput">
+            </div>
+
+            <div class="col-md-6">
+              <label class="inputLabel">Website</label>
+              <input type="url" id="edit_website"
+                     name="website" class="customInput">
+            </div>
+
+            <div class="col-md-6">
+              <label class="inputLabel">Logo</label>
+              <input type="file" id="edit_logo" name="logo"
+                     class="customInput">
+            </div>
+
+            <!-- In EDIT BUSINESS MODAL, update gallery section: -->
+            <div class="col-md-12">
+              <label class="inputLabel">Gallery Images</label>
+              
+              <!-- Existing Images Section -->
+              <div id="existingGalleryImages" style="margin-bottom: 15px;">
+                <label class="inputLabel text-muted">Current Images:</label>
+                <div id="existingImagesContainer" style="display: flex; flex-wrap: wrap; gap: 10px;">
+                  <!-- Existing images will be populated here -->
+                </div>
+              </div>
+              
+              <!-- New Images Upload Section -->
+              <div class="upload-area" id="editGalleryUploadArea">
+                <input type="file" name="gallery_images" id="editGalleryImagesInput" accept="image/*" multiple style="display: none;">
+                <div style="text-align: center; padding: 20px; border: 2px dashed #ccc; border-radius: 8px; cursor: pointer;">
+                  <i class="fa fa-cloud-upload" style="font-size: 2rem; color: #667eea;"></i>
+                  <p class="mt-2">Drag and drop NEW images here or click to select</p>
+                  <small class="text-muted">PNG, JPG, GIF (Max 5MB each, multiple allowed)</small>
+                </div>
+                <div id="editGalleryImagePreview" style="margin-top: 10px;">
+                  <!-- New image previews will appear here -->
+                </div>
+              </div>
+              
+              <!-- Hidden field to track deleted images -->
+              <input type="hidden" id="deletedImageIds" name="deleted_image_ids" value="">
+            </div>
+            {% comment %} <!-- In EDIT BUSINESS MODAL, change gallery section to: -->
+            <div class="col-md-12">
+              <label class="inputLabel">Gallery Images</label>
+              <div class="upload-area" id="editGalleryUploadArea">
+                <input type="file" name="gallery_images" id="editGalleryImagesInput" accept="image/*" multiple style="display: none;">
+                <div style="text-align: center; padding: 20px; border: 2px dashed #ccc; border-radius: 8px; cursor: pointer;">
+                  <i class="fa fa-cloud-upload" style="font-size: 2rem; color: #667eea;"></i>
+                  <p class="mt-2">Drag and drop images here or click to select</p>
+                  <small class="text-muted">PNG, JPG, GIF (Max 5MB each, multiple allowed)</small>
+                </div>
+                <div id="editGalleryImagePreview" style="margin-top: 10px;">
+                  <!-- Gallery image previews will appear here -->
+                </div>
+              </div>
+            </div> {% endcomment %}
+
+            <div class="col-md-6">
+              <label class="inputLabel">Status</label>
+              <select id="edit_is_active" name="is_active"
+                      class="customInput">
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="inputLabel">Featured</label>
+              <select id="edit_is_featured" name="is_featured"
+                      class="customInput">
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
+            </div>
+
+            <div class="modalFooter">
+              <button type="button" class="customButton" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="customButton ms-2">Update Business</button>
+            </div>
+
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ========================= -->
+<!-- DELETE BUSINESS MODAL -->
+<!-- ========================= -->
+
+<div class="modal fade customModal addDataModal" id="deleteBusinessModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+
+    <div class="modal-content text-center" style="height: 340px;">
+      <div class="modal-body">
+
+        <img src="{% static 'admin/images/svg-icon/Delete.svg' %}" alt="">
+
+        <form method="post" id="deleteBusinessForm">
+          {% csrf_token %}
+
+          <p class="mt-3">Are you sure you want to delete this business?</p>
+
+          <button type="submit" class="btn btn-danger mt-3">Delete</button>
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block extrajs %}
+<script>
+$(document).ready(function() {
+
+
+// ===== ADD MODAL GALLERY UPLOAD HANDLERS =====
+const addGalleryUploadArea = document.getElementById('addGalleryUploadArea');
+const addGalleryImagesInput = document.getElementById('addGalleryImagesInput');
+const addGalleryImagePreview = document.getElementById('addGalleryImagePreview');
+
+if (addGalleryUploadArea && addGalleryImagesInput) {
+    addGalleryUploadArea.querySelector('div').addEventListener('click', function() {
+        addGalleryImagesInput.click();
+    });
+
+    addGalleryUploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.style.opacity = '0.5';
+    });
+
+    addGalleryUploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.style.opacity = '1';
+    });
+
+    addGalleryUploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.style.opacity = '1';
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            addGalleryImagesInput.files = files;
+            handleGalleryPreview(addGalleryImagesInput, addGalleryImagePreview, 'add');
+        }
+    });
+
+    addGalleryImagesInput.addEventListener('change', function() {
+        handleGalleryPreview(this, addGalleryImagePreview, 'add');
+    });
+}
+
+// ===== EDIT MODAL GALLERY UPLOAD HANDLERS =====
+const editGalleryUploadArea = document.getElementById('editGalleryUploadArea');
+const editGalleryImagesInput = document.getElementById('editGalleryImagesInput');
+const editGalleryImagePreview = document.getElementById('editGalleryImagePreview');
+
+if (editGalleryUploadArea && editGalleryImagesInput) {
+    editGalleryUploadArea.querySelector('div').addEventListener('click', function() {
+        editGalleryImagesInput.click();
+    });
+
+    editGalleryUploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.style.opacity = '0.5';
+    });
+
+    editGalleryUploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.style.opacity = '1';
+    });
+
+    editGalleryUploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.style.opacity = '1';
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            editGalleryImagesInput.files = files;
+            handleGalleryPreview(editGalleryImagesInput, editGalleryImagePreview, 'edit');
+        }
+    });
+
+    editGalleryImagesInput.addEventListener('change', function() {
+        handleGalleryPreview(this, editGalleryImagePreview, 'edit');
+    });
+}
+
+function handleGalleryPreview(inputElement, previewContainer, modalType) {
+    previewContainer.innerHTML = '';
+    Array.from(inputElement.files).forEach((file, idx) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewHTML = `
+                <div style="position: relative; display: inline-block; margin: 5px;">
+                    <img src="${e.target.result}" alt="Preview" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
+                    <button type="button" class="btn btn-sm btn-danger" style="position: absolute; top: 2px; right: 2px;" onclick="removeGalleryImage('${modalType}')">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+            `;
+            previewContainer.innerHTML += previewHTML;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+// Remove image preview function
+window.removeGalleryImage = function(modalType) {
+    if (modalType === 'add') {
+        addGalleryImagePreview.innerHTML = '';
+        addGalleryImagesInput.value = '';
+    } else if (modalType === 'edit') {
+        editGalleryImagePreview.innerHTML = '';
+        editGalleryImagesInput.value = '';
+    }
+};
+
+
+function displayExistingGalleryImages(imageUrls, imageIds) {
+    const existingContainer = document.getElementById('existingImagesContainer');
+    existingContainer.innerHTML = '';
+
+    if (imageUrls && imageUrls.trim() !== '') {
+        const urls = imageUrls.split('|');
+        const ids = imageIds.split('|');
+
+        urls.forEach((url, index) => {
+            if (url.trim() !== '') {
+                const imageId = ids[index];
+                const imageHTML = `
+                    <div style="position: relative; display: inline-block; margin: 5px;" data-image-id="${imageId}">
+                        <img src="${url}" alt="Gallery" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid #ddd;">
+                        <button type="button" class="btn btn-sm btn-danger" 
+                                style="position: absolute; top: 2px; right: 2px;" 
+                                onclick="markImageForDeletion(${imageId}, this)">
+                            <i class="fa fa-times"></i>
+                        </button>
+                        <small style="position: absolute; bottom: 2px; left: 2px; background: rgba(0,0,0,0.7); color: white; padding: 2px 4px; border-radius: 3px; font-size: 10px;">Current</small>
+                    </div>
+                `;
+                existingContainer.innerHTML += imageHTML;
+            }
+        });
+    }
+
+    // Show/hide the existing images section
+    const existingSection = document.getElementById('existingGalleryImages');
+    if (existingContainer.innerHTML.trim() === '') {
+        existingSection.style.display = 'none';
+    } else {
+        existingSection.style.display = 'block';
+    }
+}
+
+// Function to mark image for deletion
+window.markImageForDeletion = function(imageId, button) {
+    // Add to deleted IDs list
+    const deletedIds = $('#deletedImageIds').val();
+    const newDeletedIds = deletedIds ? deletedIds + ',' + imageId : imageId;
+    $('#deletedImageIds').val(newDeletedIds);
+
+    // Hide the image (don't remove, just hide to show it's marked for deletion)
+    const imageDiv = button.closest('div');
+    imageDiv.style.opacity = '0.5';
+    imageDiv.style.border = '2px solid red';
+    button.innerHTML = '<i class="fa fa-undo"></i>';
+    button.onclick = function() { unmarkImageForDeletion(imageId, button, imageDiv); };
+    
+    // Add a "Will be deleted" label
+    const deleteLabel = document.createElement('small');
+    deleteLabel.innerHTML = 'Will be deleted';
+    deleteLabel.style.cssText = 'position: absolute; bottom: 2px; left: 2px; background: rgba(255,0,0,0.9); color: white; padding: 2px 4px; border-radius: 3px; font-size: 10px;';
+    deleteLabel.className = 'delete-label';
+    imageDiv.appendChild(deleteLabel);
+};
+
+// Function to unmark image for deletion
+window.unmarkImageForDeletion = function(imageId, button, imageDiv) {
+    // Remove from deleted IDs list
+    const deletedIds = $('#deletedImageIds').val().split(',').filter(id => id != imageId);
+    $('#deletedImageIds').val(deletedIds.join(','));
+
+    // Restore the image appearance
+    imageDiv.style.opacity = '1';
+    imageDiv.style.border = '2px solid #ddd';
+    button.innerHTML = '<i class="fa fa-times"></i>';
+    button.onclick = function() { markImageForDeletion(imageId, button); };
+    
+    // Remove the "Will be deleted" label
+    const deleteLabel = imageDiv.querySelector('.delete-label');
+    if (deleteLabel) {
+        deleteLabel.remove();
+    }
+};
+    // ===== EDIT BUSINESS MODAL =====
+    $('.edit-business').click(function() {
+        var businessId = $(this).data('business-id');
+        var name = $(this).data('name');
+        var ownerId = $(this).data('owner-id');
+        var categoryId = $(this).data('category-id');
+        var description = $(this).data('description');
+        var address = $(this).data('address');
+        var phoneNumber = $(this).data('phone-number');
+        var email = $(this).data('email');
+        var website = $(this).data('website');
+        var isActive = $(this).data('is-active') ? "true" : "false";
+        var isFeatured = $(this).data('is-featured') ? "true" : "false";
+        var editUrl = $(this).data('edit-url');
+        var galleryImages = $(this).data('gallery-images');
+        var galleryIds = $(this).data('gallery-ids');
+
+        $('#edit_business_id').val(businessId);
+        $('#edit_name').val(name);
+        $('#edit_owner').val(ownerId).trigger('change.select2');
+        $('#edit_category').val(categoryId).trigger('change.select2');
+        $('#edit_description').val(description);
+        $('#edit_address').val(address);
+        $('#edit_phone_number').val(phoneNumber);
+        $('#edit_email').val(email);
+        $('#edit_website').val(website);
+        $('#edit_is_active').val(isActive).trigger('change.select2');
+        $('#edit_is_featured').val(isFeatured).trigger('change.select2');
+        $('#editBusinessForm').attr('action', editUrl);
+
+        // Clear edit gallery preview
+        editGalleryImagePreview.innerHTML = '';
+        editGalleryImagesInput.value = '';
+        $('#deletedImageIds').val('');
+
+        displayExistingGalleryImages(galleryImages, galleryIds);
+    });
+
+    // ===== DELETE BUSINESS MODAL =====
+    $('.delete-business').click(function() {
+        var deleteUrl = $(this).data('delete-url');
+        $('#deleteBusinessForm').attr('action', deleteUrl);
+    });
+});
+</script>
+{% endblock %}

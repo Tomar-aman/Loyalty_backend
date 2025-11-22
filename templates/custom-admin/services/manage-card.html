@@ -1,0 +1,555 @@
+{% extends 'custom-admin/base.html' %}
+{% load static %}
+{% block content %}
+
+<section class="manageActivitiesPage managepadding manageallpage">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="topContent">
+          <h2 class="H2Heading">Manage Cards</h2>
+          <button class="topContentButton" data-bs-toggle="modal" data-bs-target="#addCardModal">
+            <i class="fa fa-plus" aria-hidden="true"></i>
+            Add Card
+          </button>
+        </div>
+
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{% if message.tags == "error" %}danger alert-dismissible fade show{% else %}{{message.tags}} alert-dismissible fade show{% endif %}" role="alert">
+              {{ message }}
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        <div class="scrollableTable">
+          <div class="tableInputFilter">
+            <form method="GET" class="mb-4">
+              <div class="input-group">
+                <input type="search" class="customInput searchTable" name="search" 
+                       placeholder="Search by card name or description" value="{{ search_query }}">
+              </div>
+            </form>
+          </div>
+
+          <table cellpadding="1" cellspacing="1">
+            <thead>
+              <tr>
+                <th>Card ID</th>
+                <th>Card Name</th>
+                <th>Duration</th>
+                <th>Price</th>
+                <th>Description</th>
+                <th>Benefits</th>
+                <th>Status</th>
+                <th>Created Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for card in cards %}
+              <tr>
+                <td>#{{ card.id }}</td>
+                <td>{{ card.name }}</td>
+                <td>
+                  <span class="badge bg-info">{{ card.get_duration_display }}</span>
+                </td>
+                <td>${{ card.price }}</td>
+                <td>{{ card.short_description|default:"N/A" }}</td>
+                <td>
+                  <span class="badge bg-primary">
+                    {{ card.benefits.count }} Benefits
+                  </span>
+                </td>
+                <td>
+                  <span class="badge bg-{% if card.is_active %}success{% else %}secondary{% endif %}">
+                    {% if card.is_active %}Active{% else %}Inactive{% endif %}
+                  </span>
+                </td>
+                <td>{{ card.created_at|date:"d/m/Y" }}</td>
+                <td>
+                  <button class="tableActionBtn edit-card" 
+                          data-bs-toggle="modal"
+                          data-bs-target="#editCardModal"
+                          data-card-id="{{ card.id }}">
+                    <i class="fa fa-edit"></i>
+                  </button>
+                  <button class="tableActionBtn delete-card" 
+                          data-bs-toggle="modal"
+                          data-bs-target="#deleteCardModal"
+                          data-card-id="{{ card.id }}">
+                    <i class="fa fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="9" class="text-center">No cards found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+          <!-- PAGINATION -->
+          {% if cards.has_other_pages %}
+          <div class="tablePagination">
+            <nav aria-label="Page navigation">
+              <ul class="pagination">
+                {% if cards.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ cards.has_previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                      <span aria-hidden="true">&laquo;</span>
+                    </a>
+                  </li>
+                {% endif %}
+
+                {% for num in cards.paginator.page_range %}
+                  <li class="page-item {% if cards.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a>
+                  </li>
+                {% endfor %}
+
+                {% if cards.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ cards.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                      <span aria-hidden="true">&raquo;</span>
+                    </a>
+                  </li>
+                {% endif %}
+              </ul>
+            </nav>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ADD CARD MODAL WITH BENEFITS -->
+<div class="modal fade customModal addDataModal" id="addCardModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="H2Heading">Add New Card</h6>
+        <button type="button" class="hideClose_Modal" data-bs-dismiss="modal">
+          <img src="{% static 'admin/images/close.png' %}" alt="" class="img-fluid">
+        </button>
+      </div>
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+        <form method="post" action="{% url 'admin_panel:card_add' %}" id="addCardForm">
+          {% csrf_token %}
+          <div class="row row-gap-4">
+            <!-- CARD INFORMATION SECTION -->
+            <div class="col-md-12">
+              <h5 class="H5Heading mb-3">
+                <i class="fa fa-credit-card"></i> Card Information
+              </h5>
+            </div>
+
+            <div class="col-md-12">
+              <label class="inputLabel">Card Name <span style="color: red;">*</span></label>
+              <input type="text" name="name" class="customInput" placeholder="e.g., Premium Card, Gold Card" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="inputLabel">Duration <span style="color: red;">*</span></label>
+              <select name="duration" class="customInput" required>
+                <option value="">Select Duration</option>
+                <option value="1_day">1 Day - $2.99</option>
+                <option value="1_week">1 Week - $9.99</option>
+                <option value="1_month">1 Month - $24.99</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="inputLabel">Price <span style="color: red;">*</span></label>
+              <input type="number" name="price" class="customInput" step="0.01" placeholder="Enter Price" required>
+            </div>
+
+            <div class="col-md-12">
+              <label class="inputLabel">Short Description</label>
+              <textarea name="short_description" class="customInput" rows="2" placeholder="Enter a brief description of the card"></textarea>
+            </div>
+
+            <!-- BENEFITS SECTION -->
+            <div class="col-md-12">
+              <hr class="my-4">
+              <h5 class="H5Heading mb-3">
+                <i class="fa fa-star"></i> Card Benefits
+              </h5>
+              <p class="text-muted">Add benefits that come with this card</p>
+            </div>
+
+            <div class="col-md-12">
+              <div id="addBenefitsContainer">
+                <!-- Benefits will be added here dynamically -->
+              </div>
+            </div>
+
+            <div class="col-md-12">
+              <button type="button" class="customButton" id="addBenefitBtn">
+                <i class="fa fa-plus"></i> Add Benefit
+              </button>
+            </div>
+
+            <!-- MODAL FOOTER -->
+            <div class="col-md-12">
+              <div class="modalFooter">
+                <button type="button" class="customButton" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="customButton ms-2">Create Card & Benefits</button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT CARD MODAL WITH BENEFITS -->
+<div class="modal fade customModal addDataModal" id="editCardModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="H2Heading">Edit Card</h6>
+        <button type="button" class="hideClose_Modal" data-bs-dismiss="modal">
+          <img src="{% static 'admin/images/close.png' %}" alt="" class="img-fluid">
+        </button>
+      </div>
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+        <form method="post" id="editCardForm">
+          {% csrf_token %}
+          <input type="hidden" name="card_id" id="edit_card_id">
+          <div class="row row-gap-4">
+            <!-- CARD INFORMATION SECTION -->
+            <div class="col-md-12">
+              <h5 class="H5Heading mb-3">
+                <i class="fa fa-credit-card"></i> Card Information
+              </h5>
+            </div>
+
+            <div class="col-md-12">
+              <label class="inputLabel">Card Name</label>
+              <input type="text" name="name" id="edit_name" class="customInput" placeholder="Enter Card Name">
+            </div>
+
+            <div class="col-md-6">
+              <label class="inputLabel">Duration</label>
+              <select name="duration" id="edit_duration" class="customInput">
+                <option value="1_day">1 Day</option>
+                <option value="1_week">1 Week</option>
+                <option value="1_month">1 Month</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="inputLabel">Price</label>
+              <input type="number" name="price" id="edit_price" class="customInput" step="0.01">
+            </div>
+
+            <div class="col-md-12">
+              <label class="inputLabel">Description</label>
+              <textarea name="short_description" id="edit_description" class="customInput" rows="2"></textarea>
+            </div>
+
+            <div class="col-md-12">
+              <label class="inputLabel">Status</label>
+              <div class="customSingleSelect">
+                <div class="select-icon">
+                  <i class="fa fa-angle-down selectIcon"></i>
+                  <select name="status" id="edit_status" class="icons_select2">
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- BENEFITS SECTION -->
+            <div class="col-md-12">
+              <hr class="my-4">
+              <h5 class="H5Heading mb-3">
+                <i class="fa fa-star"></i> Card Benefits
+              </h5>
+              <p class="text-muted">Manage benefits for this card</p>
+            </div>
+
+            <div class="col-md-12">
+              <div id="editBenefitsContainer">
+                <!-- Benefits will be loaded here -->
+              </div>
+            </div>
+
+            <div class="col-md-12">
+              <button type="button" class="customButton" id="editAddBenefitBtn">
+                <i class="fa fa-plus"></i> Add Benefit
+              </button>
+            </div>
+
+            <!-- MODAL FOOTER -->
+            <div class="col-md-12">
+              <div class="modalFooter">
+                <button type="button" class="customButton" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="customButton ms-2">Update Card & Benefits</button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CARD MODAL -->
+<div class="modal fade customModal addDataModal" id="deleteCardModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content text-center" style="height: 340px;">
+      <div class="modal-body">
+        <img src="{% static 'admin/images/svg-icon/Delete.svg' %}" alt="">
+        <form method="post" id="deleteCardForm">
+          {% csrf_token %}
+          <div class="row">
+            <div class="col-md-12 my-4">
+              <h2 class="H2Heading">Confirm Delete</h2>
+              <h5 class="H5Heading mt-3">Are you sure you want to delete this card and all its benefits? This action cannot be undone.</h5>
+            </div>
+
+            <div class="modalFooter">
+              <button type="button" class="customButton" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="customRedButton ms-3">Delete</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extrajs %}
+<script>
+$(document).ready(function() {
+    let addBenefitCount = 0;
+    let editBenefitCount = 0;
+    let searchTimeout;
+    var cardsData = {{ cards_json|safe }};
+    
+    // Debounce search
+    $('.searchTable').on('keyup', function() {
+        clearTimeout(searchTimeout);
+        const searchValue = $(this).val();
+        
+        searchTimeout = setTimeout(function() {
+            if (searchValue.length > 0 || searchValue.length === 0) {
+                $('form').first().submit();
+            }
+        }, 500); // 500ms delay
+    });
+
+    // ===== ADD CARD FUNCTIONS =====
+    
+    // Add new benefit field in Add modal
+    $('#addBenefitBtn').click(function() {
+        addBenefitCount++;
+        const benefitHTML = `
+            <div class="card mb-3 custom-benefit-field" id="add_benefit_${addBenefitCount}">
+                <div class="card-body">
+                    <div class="row row-gap-2">
+                        <div class="col-md-12">
+                            <label class="inputLabel">Benefit Title</label>
+                            <input type="text" name="benefit_title_${addBenefitCount}" class="customInput" 
+                                   placeholder="e.g., Instant Savings" data-benefit-index="${addBenefitCount}">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="inputLabel">Description</label>
+                            <textarea name="benefit_description_${addBenefitCount}" class="customInput" rows="2" 
+                                      placeholder="Enter benefit description"></textarea>
+                        </div>
+                        <div class="col-md-10">
+                            <label class="inputLabel">Icon Class (FontAwesome)</label>
+                            <input type="text" name="benefit_icon_${addBenefitCount}" class="customInput" 
+                                   placeholder="e.g., fa-star, fa-gift, fa-dollar-sign">
+                            <small class="text-muted">Font Awesome icon classes</small>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-danger btn-sm remove-benefit mt-4" 
+                                    onclick="removeAddBenefit(${addBenefitCount})">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        $('#addBenefitsContainer').append(benefitHTML);
+    });
+
+    window.removeAddBenefit = function(index) {
+        $(`#add_benefit_${index}`).remove();
+    };
+
+    // Override add card form submission
+    $('#addCardForm').submit(function(e) {
+        e.preventDefault();
+        
+        // Collect benefits data
+        const benefits = [];
+        $('.custom-benefit-field').each(function() {
+            const index = $(this).find('input').first().data('benefit-index');
+            const benefit = {
+                title: $(`input[name="benefit_title_${index}"]`).val(),
+                description: $(`textarea[name="benefit_description_${index}"]`).val(),
+                icon: $(`input[name="benefit_icon_${index}"]`).val()
+            };
+            if (benefit.title) {
+                benefits.push(benefit);
+            }
+        });
+        
+        // Add benefits to form as hidden JSON
+        $('<input>').attr({
+            type: 'hidden',
+            name: 'benefits_json',
+            value: JSON.stringify(benefits)
+        }).appendTo(this);
+        
+        // Submit the form
+        this.submit();
+    });
+
+    // ===== EDIT CARD FUNCTIONS =====
+
+    // Edit card modal - load card data
+    $('.edit-card').click(function() {
+        var cardId = $(this).data('card-id');
+        var card = cardsData.find(c => c.id == cardId);
+        if (card) {
+            $('#edit_card_id').val(card.id);
+            $('#edit_name').val(card.name);
+            $('#edit_duration').val(card.duration);
+            $('#edit_price').val(card.price);
+            $('#edit_description').val(card.short_description);
+            $('#edit_status').val(card.is_active ? "true" : "false").trigger('change.select2');
+            // Clear and fill benefits
+            editBenefitCount = 0;
+            $('#editBenefitsContainer').empty();
+            card.benefits.forEach((benefit, index) => {
+                editBenefitCount++;
+                const benefitHTML = `
+                    <div class="card mb-3 edit-benefit-field" id="edit_benefit_${editBenefitCount}">
+                        <div class="card-body">
+                            <div class="row row-gap-2">
+                                <div class="col-md-12">
+                                    <label class="inputLabel">Benefit Title</label>
+                                    <input type="text" name="benefit_title_${editBenefitCount}" class="customInput" 
+                                           value="${benefit.title || ''}" data-benefit-index="${editBenefitCount}">
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="inputLabel">Description</label>
+                                    <textarea name="benefit_description_${editBenefitCount}" class="customInput" rows="2">${benefit.description || ''}</textarea>
+                                </div>
+                                <div class="col-md-10">
+                                    <label class="inputLabel">Icon Class (FontAwesome)</label>
+                                    <input type="text" name="benefit_icon_${editBenefitCount}" class="customInput" 
+                                           value="${benefit.icon || ''}" placeholder="e.g., fa-star, fa-gift">
+                                    <small class="text-muted">Font Awesome icon classes</small>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-danger btn-sm remove-benefit mt-4" 
+                                            onclick="removeEditBenefit(${editBenefitCount})">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                $('#editBenefitsContainer').append(benefitHTML);
+            });
+            // Set form action
+            $('#editCardForm').attr('action', `{% url 'admin_panel:card_edit' 0 %}`.replace('0', cardId));
+        }
+    });
+
+    // Add new benefit field in Edit modal
+    $('#editAddBenefitBtn').click(function() {
+        editBenefitCount++;
+        const benefitHTML = `
+            <div class="card mb-3 edit-benefit-field" id="edit_benefit_${editBenefitCount}">
+                <div class="card-body">
+                    <div class="row row-gap-2">
+                        <div class="col-md-12">
+                            <label class="inputLabel">Benefit Title</label>
+                            <input type="text" name="benefit_title_${editBenefitCount}" class="customInput" 
+                                   placeholder="e.g., Instant Savings" data-benefit-index="${editBenefitCount}">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="inputLabel">Description</label>
+                            <textarea name="benefit_description_${editBenefitCount}" class="customInput" rows="2" 
+                                      placeholder="Enter benefit description"></textarea>
+                        </div>
+                        <div class="col-md-10">
+                            <label class="inputLabel">Icon Class (FontAwesome)</label>
+                            <input type="text" name="benefit_icon_${editBenefitCount}" class="customInput" 
+                                   placeholder="e.g., fa-star, fa-gift, fa-dollar-sign">
+                            <small class="text-muted">Font Awesome icon classes</small>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-danger btn-sm remove-benefit mt-4" 
+                                    onclick="removeEditBenefit(${editBenefitCount})">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        $('#editBenefitsContainer').append(benefitHTML);
+    });
+
+    window.removeEditBenefit = function(index) {
+        $(`#edit_benefit_${index}`).remove();
+    };
+
+    // Override edit card form submission
+    $('#editCardForm').submit(function(e) {
+        e.preventDefault();
+        
+        // Collect benefits data
+        const benefits = [];
+        $('#editBenefitsContainer').find('.edit-benefit-field').each(function() {
+            const index = $(this).find('input').first().data('benefit-index');
+            const benefit = {
+                title: $(`input[name="benefit_title_${index}"]`).val(),
+                description: $(`textarea[name="benefit_description_${index}"]`).val(),
+                icon: $(`input[name="benefit_icon_${index}"]`).val()
+            };
+            if (benefit.title) {
+                benefits.push(benefit);
+            }
+        });
+        
+        // Add benefits to form as hidden JSON
+        $('<input>').attr({
+            type: 'hidden',
+            name: 'benefits_json',
+            value: JSON.stringify(benefits)
+        }).appendTo(this);
+        
+        // Submit the form
+        this.submit();
+    });
+
+    // Delete card modal
+    $('.delete-card').click(function() {
+        var cardId = $(this).data('card-id');
+        $('#deleteCardForm').attr('action', `{% url 'admin_panel:card_delete' 0 %}`.replace('0', cardId));
+    });
+});
+</script>
+{% endblock %}

@@ -60,7 +60,12 @@ INSTALLED_APPS = [
 
     # Project apps
     'users',
-    'settings'
+    'settings',
+    'news',
+    'card',
+    'business',
+    'super_admin',
+
 ]
 
 MIDDLEWARE = [
