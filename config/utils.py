@@ -1,37 +1,67 @@
 # from django.conf import settings
 from config import settings
-from django.template.loader import  get_template
-from django.core import mail 
 from django.core.mail.backends.smtp import EmailBackend
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
 from settings.models import SMTPSettings
 
-def send_mail(subject, email_template_name, context, to_email,**kwargs):
+def send_mail(subject, email_template_name, context, to_email, **kwargs):
     """
-    Send a django.core.mail.EmailMultiAlternatives to to_email.
+    Send email using custom EmailBackend directly.
     """
+
+    # 1. Load SMTP settings
     mail_setting = SMTPSettings.objects.last()
     if mail_setting:
         host = mail_setting.host
         host_user = mail_setting.username
         host_pass = mail_setting.password
         host_port = mail_setting.port
-        from_mail = f"Loyalty {mail_setting.from_email}"
+        use_tls = mail_setting.use_tls
+        from_email = f"Properly <{mail_setting.from_email}>"
     else:
         host = settings.EMAIL_HOST
         host_user = settings.EMAIL_HOST_USER
         host_pass = settings.EMAIL_HOST_PASSWORD
         host_port = settings.EMAIL_PORT
-        from_mail = f"Loyalty {settings.EMAIL_HOST_USER}"
-    mail_obj = EmailBackend( host=host,port=host_port,  password=host_pass, username=host_user,  use_tls=True, timeout=10)
-    email_template = get_template(email_template_name).render(context)
-    email_msg = mail.EmailMessage(
-            subject=subject,
-            body=email_template,
-            from_email= from_mail if from_mail else host_user,
-            to=[to_email],
-           )
-    if kwargs.items():
-        email_msg.attach(kwargs['filename'], kwargs['file'].read(), 'application/pdf')
-    email_msg.content_subtype = 'html'
-    mail_obj.send_messages([email_msg])
-    mail_obj.close()
+        use_tls = settings.EMAIL_USE_TLS
+        from_email = f"Properly <{settings.EMAIL_HOST_USER}>"
+
+    # 2. Create EmailBackend instance (your requirement)
+    backend = EmailBackend(
+        host=host,
+        port=host_port,
+        username=host_user,
+        password=host_pass,
+        use_tls=use_tls,
+        timeout=10
+    )
+
+    # 3. Render email template
+    html_body = render_to_string(email_template_name, context)
+
+    # 4. Bind backend to the EmailMessage (THIS was the missing step)
+    email = EmailMessage(
+        subject=subject,
+        body=html_body,
+        from_email=from_email,
+        to=[to_email],
+        connection=backend,        # <-- REQUIRED or backend is ignored
+    )
+    email.content_subtype = "html"
+
+    # 5. Attach file if provided
+    if kwargs.get("filename") and kwargs.get("file"):
+        email.attach(
+            kwargs["filename"],
+            kwargs["file"].read(),
+            "application/pdf"
+        )
+
+    # 6. Send using EmailBackend
+    try:
+        email.send()
+        return True
+    except Exception as e:
+        print("Email error:", e)
+        return False
