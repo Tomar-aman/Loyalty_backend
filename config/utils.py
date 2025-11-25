@@ -18,14 +18,14 @@ def send_mail(subject, email_template_name, context, to_email, **kwargs):
         host_pass = mail_setting.password
         host_port = mail_setting.port
         use_tls = mail_setting.use_tls
-        from_email = f"Properly <{mail_setting.from_email}>"
+        from_email = f"Loyalty <{mail_setting.from_email}>"
     else:
         host = settings.EMAIL_HOST
         host_user = settings.EMAIL_HOST_USER
         host_pass = settings.EMAIL_HOST_PASSWORD
         host_port = settings.EMAIL_PORT
         use_tls = settings.EMAIL_USE_TLS
-        from_email = f"Properly <{settings.EMAIL_HOST_USER}>"
+        from_email = f"Loyalty <{settings.EMAIL_HOST_USER}>"
 
     # 2. Create EmailBackend instance (your requirement)
     backend = EmailBackend(
