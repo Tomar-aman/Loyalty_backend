@@ -58,14 +58,14 @@ class SignupSerializer(serializers.ModelSerializer):
         )
 
         # Send OTP
-        send_mail(
-            subject="Your OTP Code",
-            email_template_name='email/otp_email.html',
-            context={"user": user, "otp_code": otp_code},
-            to_email=user.email
-        )
+        # send_mail(
+        #     subject="Your OTP Code",
+        #     email_template_name='email/otp_email.html',
+        #     context={"user": user, "otp_code": otp_code},
+        #     to_email=user.email
+        # )
 
-        return user
+        return otp_code
 
 
 class OTPVerificationSerializer(serializers.Serializer):
