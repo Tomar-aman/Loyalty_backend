@@ -47,6 +47,10 @@ class SignupSerializer(serializers.ModelSerializer):
             user.is_active = False
             user.save()
 
+        try:
+            OTP.objects.filter(user=user).delete()  # Clean up old OTPs
+        except OTP.DoesNotExist:
+            pass
         # Generate and save OTP
         otp_code = str(random.randint(100000, 999999))
         OTP.objects.update_or_create(
