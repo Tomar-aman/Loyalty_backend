@@ -59,6 +59,18 @@ class User(AbstractUser):
         null=True,
         blank=True
     )
+    customer_id = models.CharField(
+        _('customer id'),
+        max_length=255,
+        null=True,
+        blank=True
+    )
+    city = models.ForeignKey(
+        'users.City',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
     is_temp = models.BooleanField(
         _('temporary user'),
         default=True,
@@ -154,3 +166,106 @@ class OTP(models.Model):
         """
         from django.utils import timezone
         return timezone.now() > self.expires_at if self.expires_at else True
+    
+
+class Country(models.Model):
+    name = models.CharField(
+        _('country name'),
+        max_length=100,
+        unique=True
+    )
+    code = models.CharField(
+        _('country code'),
+        max_length=10,
+        unique=True
+    )
+    phone_code = models.CharField(
+        _('phone code'),
+        max_length=10,
+        null=True,
+        blank=True
+    )
+    flag = models.URLField(
+        _('flag'),
+        null=True, 
+        blank=True
+    )  
+    created_at = models.DateTimeField(
+        _('created at'),
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        _('updated at'),
+        auto_now=True
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = _('country')
+        verbose_name_plural = _('countries')
+    
+class City(models.Model):
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name='cities',
+        verbose_name=_('country'),
+        help_text=_('The country this city belongs to.')
+    )
+    name = models.CharField(
+    _('city name'),
+    max_length=100, 
+    unique=True
+    )
+    is_popular = models.BooleanField(
+        _('is popular'),
+        default=False,
+        help_text=_('Designates whether the city is marked as popular.')
+    )
+    icon = models.ImageField(
+        _('icon'),
+        upload_to="city_icons/", 
+        null=True, 
+        blank=True
+    )  
+    created_at = models.DateTimeField(
+        _('created at'),
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        _('updated at'),
+        auto_now=True
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = _('city')
+        verbose_name_plural = _('cities')
+
+
+class UserSearchHistory(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name=_('user'),
+        help_text=_('The user who performed the search')
+    )
+    search = models.CharField(
+        _('search term'),
+        max_length=255,
+        help_text=_('The search term entered by the user'),
+        null=True,
+        blank=True
+    )
+    searched_at = models.DateTimeField(
+        _('searched at'),
+        auto_now_add=True,
+        help_text=_('The date and time when the search was performed')
+    )
+
+    class Meta:
+        ordering = ["-searched_at"]

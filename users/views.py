@@ -1,9 +1,13 @@
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
-from users.serializers import CompleteSignUpSerializer, LogoutSerializer, SignupSerializer, OTPVerificationSerializer, ResendOTPSerializer, UserDetailsSerializer, GoogleAuthSerializer
+from users.models import City, Country, UserSearchHistory
+from users.serializers import CitySerializer, CompleteSignUpSerializer, LogoutSerializer, SignupSerializer, OTPVerificationSerializer, ResendOTPSerializer, UserDetailsSerializer, GoogleAuthSerializer, CountrySerializer, UserSearchHistorySerializer
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework import filters
+
+
 
 class SignupView(GenericAPIView):
     permission_classes = [AllowAny]
@@ -184,3 +188,96 @@ class LogoutView(GenericAPIView):
             return Response({"error": "Refresh token required."}, status=status.HTTP_400_BAD_REQUEST)
         except TokenError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class CountryListView(GenericAPIView):
+    """
+    View to list all countries.
+    """
+    serializer_class = CountrySerializer
+    permission_classes = [AllowAny]
+
+    # enable search and ordering
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["name", "code", "phone_code"]
+    ordering_fields = ["name", "code"]
+    ordering = ["name"]
+
+    def get_queryset(self):
+        # base queryset
+        return Country.objects.all().order_by("name")
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class CityListView(GenericAPIView):
+    """
+    GET /api/cities/
+    - Paginated
+    - Search by city name with ?search=
+    - Filter by country id or country code with ?country= or ?country_code=
+    - Sort with ?ordering=name or ?ordering=-created_at
+    """
+
+    serializer_class = CitySerializer
+
+    def get_queryset(self):
+        return City.objects.select_related('country').all().order_by('name')
+
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name']
+    ordering_fields = ['name', 'created_at', 'updated_at']
+    ordering = ['name']
+    filterset_fields = ['country', 'is_popular', 'country__code']  # allow ?country=1 or ?is_popular=true or ?country__c
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', None)
+        if search_term and request.user.is_authenticated:
+            UserSearchHistory.objects.create(user=request.user, search=search_term)
+
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class PopularCityListView(GenericAPIView):
+    """
+    View to list popular cities.
+    """
+    serializer_class = CitySerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return City.objects.filter(is_popular=True).select_related('country').order_by('name')
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+class UserSearchHistoryView(GenericAPIView):
+    """
+    View to list user's search history.
+    """
+    serializer_class = UserSearchHistorySerializer
+
+    def get_queryset(self):
+        return UserSearchHistory.objects.filter(user=self.request.user).order_by('-searched_at')
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

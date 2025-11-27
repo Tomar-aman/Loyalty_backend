@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from users.models import User, OTP
+from users.models import User, OTP, Country, City, UserSearchHistory
 from django.utils import timezone
 import random
 from datetime import timedelta
@@ -145,6 +145,8 @@ class CompleteSignUpSerializer(serializers.Serializer):
     country_code = serializers.CharField(required=False, allow_blank=True)
     phone_number = serializers.CharField(required=False, allow_blank=True)
     profile_picture = serializers.ImageField(required=False, allow_null=True)
+    customer_id = serializers.CharField(required=False, allow_blank=True)
+    city = serializers.PrimaryKeyRelatedField(queryset=City.objects.all(), required=False, allow_null=True)
 
     def validate(self, attrs):
         user = self.context['request'].user
@@ -170,7 +172,8 @@ class UserDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'first_name', 'last_name', 'email', 'phone_number','profile_picture',
+            'id', 'first_name', 'last_name', 'email', 'phone_number','profile_picture','customer_id',
+            'city',
             'country_code','is_active','is_temp',
         ]
          
@@ -368,3 +371,33 @@ class ChangePasswordSerializer(serializers.Serializer):
     
 class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField(required=True)
+
+
+class CountrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Country
+        fields = ['id', 'name', 'code', 'phone_code', 'flag']
+
+class CitySerializer(serializers.ModelSerializer):
+    country_name = serializers.CharField(source='country.name', read_only=True)
+    country_code = serializers.CharField(source='country.code', read_only=True)
+
+    class Meta:
+        model = City
+        fields = [
+            'id',
+            'name',
+            'is_popular',
+            'icon',
+            'country',
+            'country_name',
+            'country_code',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+
+class UserSearchHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserSearchHistory
+        fields = ['id', 'search', 'searched_at']
