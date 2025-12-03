@@ -24,7 +24,13 @@ urlpatterns = [
     path('admins/<int:admin_id>/edit/', views.AdminEditView.as_view(), name='admin_edit'),
     path('admins/<int:admin_id>/delete/', views.AdminDeleteView.as_view(), name='admin_delete'),
     path('admins/<int:admin_id>/toggle/', views.AdminToggleStatusView.as_view(), name='admin_toggle'),
-    
+
+    # Cities management
+    path('cities/', views.CityListView.as_view(), name='manage_cities'),
+    path('cities/add/', views.CityAddView.as_view(), name='city_add'),
+    path('cities/<int:city_id>/edit/', views.CityEditView.as_view(), name='city_edit'),
+    path('cities/<int:city_id>/delete/', views.CityDeleteView.as_view(), name='city_delete'),
+        
     # Card Management Routes
     path('cards/', views.CardListView.as_view(), name='manage_cards'),
     path('cards/add/', views.CardAddView.as_view(), name='card_add'),

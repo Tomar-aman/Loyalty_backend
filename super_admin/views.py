@@ -21,9 +21,8 @@ from django.http import JsonResponse
 import json
 from news.models import NewsArticle
 from django.core.files.storage import default_storage
-import os
 from business.models import Business, BusinessCategory, BusinessImage, BusinessOffer
-from users.models import User
+from users.models import User, City, Country
 from django.views.generic import TemplateView, View
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
@@ -462,6 +461,111 @@ class UserEditView(View):
             messages.error(request, f'Error: {str(e)}')
         return redirect('admin_panel:manage_users')
 
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class CityListView(TemplateView):
+    template_name = 'custom-admin/services/manage-city.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        search_query = self.request.GET.get('search', '')
+        page = self.request.GET.get('page', 1)
+
+        cities = City.objects.select_related('country').all()
+        if search_query:
+            cities = cities.filter(
+                Q(name__icontains=search_query) |
+                Q(country__name__icontains=search_query)
+            )
+        cities = cities.order_by('-id')
+        paginator = Paginator(cities, 25)
+        cities_page = paginator.get_page(page)
+
+        context['cities'] = cities_page
+        context['countries'] = Country.objects.order_by('name')  # for add/edit forms
+        context['search_query'] = search_query
+        context['title'] = 'City Management'
+        return context
+
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class CityAddView(View):
+    def post(self, request):
+        try:
+            country_id = request.POST.get('country')
+            name = request.POST.get('name', '').strip()
+            is_popular = request.POST.get('is_popular', 'false') == 'true'
+            icon = request.FILES.get('icon')
+
+            if not country_id or not name:
+                messages.error(request, 'Country and city name are required')
+                return redirect('admin_panel:manage_cities')
+
+            country = get_object_or_404(Country, pk=country_id)
+
+            # Optional: prevent duplicate city name for same country
+            if City.objects.filter(country=country, name__iexact=name).exists():
+                messages.error(request, f'City "{name}" already exists for {country.name}')
+                return redirect('admin_panel:manage_cities')
+
+            City.objects.create(country=country, name=name, is_popular=is_popular, icon=icon)
+            messages.success(request, f'City "{name}" added successfully')
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+
+        return redirect('admin_panel:manage_cities')
+
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class CityEditView(View):
+    def post(self, request, city_id):
+        try:
+            city = City.objects.get(pk=city_id)
+            country_id = request.POST.get('country')
+            name = request.POST.get('name', '').strip()
+            is_popular = request.POST.get('is_popular', 'false') == 'true'
+            icon = request.FILES.get('icon')
+            print(icon,"url")
+
+            if not country_id or not name:
+                messages.error(request, 'Country and city name are required')
+                return redirect('admin_panel:manage_cities')
+
+            country = get_object_or_404(Country, pk=country_id)
+
+            # prevent duplicate name in same country (except itself)
+            if City.objects.filter(country=country, name__iexact=name).exclude(pk=city_id).exists():
+                messages.error(request, f'City "{name}" already exists for {country.name}')
+                return redirect('admin_panel:manage_cities')
+
+            city.country = country
+            city.name = name
+            city.is_popular = is_popular
+            if icon:
+                city.icon = icon
+            city.save()
+            messages.success(request, 'City updated successfully')
+        except City.DoesNotExist:
+            messages.error(request, 'City not found')
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+
+        return redirect('admin_panel:manage_cities')
+
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class CityDeleteView(View):
+    def post(self, request, city_id):
+        try:
+            city = City.objects.get(pk=city_id)
+            name = city.name
+            city.delete()
+            messages.success(request, f'City "{name}" deleted successfully')
+        except City.DoesNotExist:
+            messages.error(request, 'City not found')
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+
+        return redirect('admin_panel:manage_cities')
 
 # CARD MANAGEMENT VIEWS
 @method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
