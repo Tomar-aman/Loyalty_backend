@@ -9,6 +9,30 @@ from django.core.files.base import ContentFile
 # from firebase_admin import auth
 # from config.utils import initialize_firebase
 
+class CountrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Country
+        fields = ['id', 'name', 'code', 'phone_code', 'flag']
+
+class CitySerializer(serializers.ModelSerializer):
+    country_name = serializers.CharField(source='country.name', read_only=True)
+    country_code = serializers.CharField(source='country.code', read_only=True)
+    
+
+    class Meta:
+        model = City
+        fields = [
+            'id',
+            'name',
+            'is_popular',
+            'icon',
+            'country_name',
+            'country_code',
+            # 'created_at',
+            # 'updated_at',
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+
 class SignupSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(write_only=True, required=True)
     
@@ -169,6 +193,7 @@ class CompleteSignUpSerializer(serializers.Serializer):
     
 
 class UserDetailsSerializer(serializers.ModelSerializer):
+    city = CitySerializer(read_only=True)
     class Meta:
         model = User
         fields = [
@@ -372,30 +397,6 @@ class ChangePasswordSerializer(serializers.Serializer):
 class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField(required=True)
 
-
-class CountrySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Country
-        fields = ['id', 'name', 'code', 'phone_code', 'flag']
-
-class CitySerializer(serializers.ModelSerializer):
-    country_name = serializers.CharField(source='country.name', read_only=True)
-    country_code = serializers.CharField(source='country.code', read_only=True)
-
-    class Meta:
-        model = City
-        fields = [
-            'id',
-            'name',
-            'is_popular',
-            'icon',
-            'country',
-            'country_name',
-            'country_code',
-            'created_at',
-            'updated_at',
-        ]
-        read_only_fields = ['created_at', 'updated_at']
 
 class UserSearchHistorySerializer(serializers.ModelSerializer):
     class Meta:

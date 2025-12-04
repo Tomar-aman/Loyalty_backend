@@ -82,6 +82,7 @@
                           data-bs-target="#editCategoryModal"
                           data-category-id="{{ category.id }}"
                           data-name="{{ category.name|escapejs }}"
+                          data-icon-url="{{ category.icon.url if category.icon else '' }}"
                           data-is-active="{{ category.is_active }}"
                           data-business-count="{{ category.businesses.count }}"
                           data-created-date="{{ category.created_at|date:'d/m/Y H:i' }}"
@@ -162,6 +163,10 @@
               <input type="text" name="name" class="customInput" placeholder="Enter category name" required>
               <small class="text-muted">Minimum 3 characters, Maximum 255 characters</small>
             </div>
+            <div class="col-md-12">
+              <label class="inputLabel">Category Icon</label>
+              <input type="file" name="icon" class="customInput" accept="image/*">
+            </div>
 
             <div class="col-md-12">
               <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
@@ -202,6 +207,12 @@
               <label class="inputLabel">Category Name</label>
               <input type="text" name="name" id="edit_name" class="customInput" placeholder="Enter category name">
               <small class="text-muted">Minimum 3 characters, Maximum 255 characters</small>
+            </div>
+
+            <div class="col-md-12">
+              <label class="inputLabel">Category Icon</label>
+              <img id="edit_icon_preview" src="" alt="Category Icon" style="max-width: 100px; display: block; margin-bottom: 10px;">
+              <input type="file" name="icon" id="edit_icon" class="customInput" accept="image/*">
             </div>
 
             <div class="col-md-12">
@@ -303,6 +314,7 @@ $(document).ready(function() {
     $('.edit-category').click(function() {
         var categoryId = $(this).data('category-id');
         var name = $(this).data('name');
+        var iconUrl = $(this).data('icon-url');
         var isActive = $(this).data('is-active');
         var businessCount = $(this).data('business-count');
         var createdDate = $(this).data('created-date');
@@ -311,6 +323,8 @@ $(document).ready(function() {
 
         $('#edit_category_id').val(categoryId);
         $('#edit_name').val(name);
+        // Note: File inputs cannot be set programmatically for security reasons.
+        $('#edit_icon_preview').attr('src', iconUrl ? iconUrl : '').toggle(!!iconUrl);
         $('#edit_status').val(isActive ? "true" : "false").trigger('change.select2');
         $('#businessCount').text(businessCount);
         $('#edit_created_date').text(createdDate);

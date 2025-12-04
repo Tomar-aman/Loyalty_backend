@@ -953,6 +953,7 @@ class CategoryAddView(View):
     def post(self, request):
         try:
             name = request.POST.get('name', '').strip()
+            icon = request.FILES.get('icon')
             
             # Validation
             if not name:
@@ -975,6 +976,7 @@ class CategoryAddView(View):
             # Create category
             category = BusinessCategory.objects.create(
                 name=name,
+                icon=icon,
                 is_active=True
             )
             
@@ -992,6 +994,7 @@ class CategoryEditView(View):
         try:
             category = BusinessCategory.objects.get(pk=category_id)
             name = request.POST.get('name', '').strip()
+            icon = request.FILES.get('icon')
             
             # Validation
             if not name:
@@ -1013,6 +1016,8 @@ class CategoryEditView(View):
             
             old_name = category.name
             category.name = name
+            if icon:
+                category.icon = icon
             
             # Handle status update
             status = request.POST.get('status')

@@ -8,6 +8,12 @@ class BusinessCategory(models.Model):
         max_length=255,
         unique=True,
     )
+    icon = models.ImageField(
+        _("Icon"),
+        upload_to='category_icons/',
+        null=True,
+        blank=True,
+    )
     is_active = models.BooleanField(
         _("Is Active"),
         default=True,
