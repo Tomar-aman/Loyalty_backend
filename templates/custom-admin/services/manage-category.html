@@ -82,7 +82,7 @@
                           data-bs-target="#editCategoryModal"
                           data-category-id="{{ category.id }}"
                           data-name="{{ category.name|escapejs }}"
-                          data-icon-url="{{ category.icon.url if category.icon else '' }}"
+                          data-icon-url="{% if category.icon %}{{ category.icon.url }}{% else %}{% endif %}"
                           data-is-active="{{ category.is_active }}"
                           data-business-count="{{ category.businesses.count }}"
                           data-created-date="{{ category.created_at|date:'d/m/Y H:i' }}"

@@ -17,7 +17,7 @@ class CountrySerializer(serializers.ModelSerializer):
 class CitySerializer(serializers.ModelSerializer):
     country_name = serializers.CharField(source='country.name', read_only=True)
     country_code = serializers.CharField(source='country.code', read_only=True)
-    
+
 
     class Meta:
         model = City
@@ -166,7 +166,7 @@ class ResendOTPSerializer(serializers.Serializer):
 class CompleteSignUpSerializer(serializers.Serializer):
     first_name = serializers.CharField(required=True)
     last_name = serializers.CharField(required=True)
-    country_code = serializers.CharField(required=False, allow_blank=True)
+    country = serializers.PrimaryKeyRelatedField(queryset=Country.objects.all(), required=False, allow_null=True)
     phone_number = serializers.CharField(required=False, allow_blank=True)
     profile_picture = serializers.ImageField(required=False, allow_null=True)
     customer_id = serializers.CharField(required=False, allow_blank=True)
@@ -194,10 +194,12 @@ class CompleteSignUpSerializer(serializers.Serializer):
 
 class UserDetailsSerializer(serializers.ModelSerializer):
     city = CitySerializer(read_only=True)
+    country = CountrySerializer(read_only=True)
     class Meta:
         model = User
         fields = [
             'id', 'first_name', 'last_name', 'email', 'phone_number','profile_picture','customer_id',
+            'country',
             'city',
             'country_code','is_active','is_temp',
         ]

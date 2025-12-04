@@ -17,6 +17,12 @@ class User(AbstractUser):
         blank=True,
         help_text=_('Optional last name of the user.')
     )
+    country = models.ForeignKey(
+        'users.Country',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
     country_code = models.CharField(
         _('country code'),
         max_length=5,
