@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-class NewsArticle(models.Model):
+from config.models import BaseModel
+
+class NewsArticle(BaseModel):
     title = models.TextField(
         _("Title"),
         null=True,
