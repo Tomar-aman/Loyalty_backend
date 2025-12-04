@@ -195,14 +195,25 @@ class CompleteSignUpSerializer(serializers.Serializer):
 class UserDetailsSerializer(serializers.ModelSerializer):
     city = CitySerializer(read_only=True)
     country = CountrySerializer(read_only=True)
+
+    # write-only PK fields for updates
+    city_id = serializers.PrimaryKeyRelatedField(
+        queryset=City.objects.all(), source='city', write_only=True, required=False, allow_null=True
+    )
+    country_id = serializers.PrimaryKeyRelatedField(
+        queryset=Country.objects.all(), source='country', write_only=True, required=False, allow_null=True
+    )
     class Meta:
         model = User
         fields = [
             'id', 'first_name', 'last_name', 'email', 'phone_number','profile_picture','customer_id',
             'country',
             'city',
-            'country_code','is_active','is_temp',
+            'country_code','is_active','is_temp', 'country_id', 'city_id'
         ]
+    
+    
+    
          
 
 class GoogleAuthSerializer(serializers.Serializer):

@@ -325,6 +325,7 @@ $(document).ready(function() {
         $('#edit_name').val(name);
         // Note: File inputs cannot be set programmatically for security reasons.
         $('#edit_icon_preview').attr('src', iconUrl ? iconUrl : '').toggle(!!iconUrl);
+        
         $('#edit_status').val(isActive ? "true" : "false").trigger('change.select2');
         $('#businessCount').text(businessCount);
         $('#edit_created_date').text(createdDate);
