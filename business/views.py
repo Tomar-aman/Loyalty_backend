@@ -1,3 +1,66 @@
-from django.shortcuts import render
+from rest_framework.generics import (
+    ListAPIView,
+    RetrieveAPIView,
+    GenericAPIView
+)
+from rest_framework.response import Response
+from rest_framework import status
 
-# Create your views here.
+from business.models import (
+    BusinessCategory,
+    Business
+)
+from business.serializers import (
+    BusinessCategorySerializer,
+    BusinessSerializer,
+    BusinessDetailSerializer
+)
+
+class BusinessCategoryListView(GenericAPIView):
+    serializer_class = BusinessCategorySerializer
+
+    def get(self, request, *args, **kwargs):
+        try:
+            categories = BusinessCategory.objects.filter(is_active=True)
+            serializer = self.get_serializer(categories, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class BusinessListView(GenericAPIView):
+    """
+    GET /api/businesses/  -> list active businesses (summary)
+    """
+    serializer_class = BusinessDetailSerializer
+    queryset = Business.objects.filter(is_active=True).select_related('category')
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        # optional: filter by category id ?category=<id>
+        category = self.request.GET.get('category')
+        search = self.request.GET.get('search')
+        if category:
+            qs = qs.filter(category_id=category)
+        if search:
+            qs = qs.filter(name__icontains=search)
+        return qs
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            businesses = self.get_queryset()
+            serializer = self.get_serializer(businesses, many=True, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class BusinessDetailView(RetrieveAPIView):
+    """
+    GET /api/businesses/<pk>/ -> detailed business info
+    """
+    serializer_class = BusinessDetailSerializer
+    queryset = Business.objects.all()
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context

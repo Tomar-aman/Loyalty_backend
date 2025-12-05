@@ -954,6 +954,7 @@ class CategoryAddView(View):
         try:
             name = request.POST.get('name', '').strip()
             icon = request.FILES.get('icon')
+            print(icon,"url")
             
             # Validation
             if not name:
@@ -995,6 +996,7 @@ class CategoryEditView(View):
             category = BusinessCategory.objects.get(pk=category_id)
             name = request.POST.get('name', '').strip()
             icon = request.FILES.get('icon')
+            print(icon,"url")
             
             # Validation
             if not name:
@@ -1017,6 +1019,12 @@ class CategoryEditView(View):
             old_name = category.name
             category.name = name
             if icon:
+                # delete old icon file if exists
+                try:
+                    if category.icon and default_storage.exists(category.icon.name):
+                        default_storage.delete(category.icon.name)
+                except Exception:
+                    pass
                 category.icon = icon
             
             # Handle status update
@@ -1047,6 +1055,13 @@ class CategoryDeleteView(View):
             if business_count > 0:
                 messages.error(request, f'Cannot delete category "{category_name}" as it has {business_count} business(es) associated with it')
                 return redirect('admin_panel:manage_categories')
+            
+            # delete icon file if exists
+            try:
+                if category.icon and default_storage.exists(category.icon.name):
+                    default_storage.delete(category.icon.name)
+            except Exception:
+                pass
             
             category.delete()
             messages.success(request, f'Category "{category_name}" deleted successfully')
