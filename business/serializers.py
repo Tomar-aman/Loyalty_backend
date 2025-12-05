@@ -34,32 +34,23 @@ class BusinessImageSerializer(serializers.ModelSerializer):
 class BusinessOfferSerializer(serializers.ModelSerializer):
     class Meta:
         model = BusinessOffer
-        fields = ['id', 'title', 'description', 'start_date', 'end_date', 'is_active']
+        fields = ['id', 'title', 'description', 'coupon_code', 'start_date', 'end_date', 'is_active']
 
 # summary serializer for lists
 class BusinessSerializer(serializers.ModelSerializer):
     category = BusinessCategorySerializer(read_only=True)
-    owner = OwnerSerializer(read_only=True)
-    logo_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Business
-        fields = ['id', 'name', 'logo_url', 'category', 'owner', 'is_active', 'is_featured']
-
-    def get_logo_url(self, obj):
-        request = self.context.get('request')
-        if obj.logo:
-            try:
-                return request.build_absolute_uri(obj.logo.url) if request else obj.logo.url
-            except Exception:
-                return None
-        return None
+        fields = ['id','name', 'description', 'address', 'phone_number', 'email', 'website',
+            'latitude', 'longitude',
+            'logo', 'category', 'is_featured']
 
 # detailed serializer for single business view
 class BusinessDetailSerializer(serializers.ModelSerializer):
     category = BusinessCategorySerializer(read_only=True)
-    images = BusinessImageSerializer(source='businessimage_set', many=True, read_only=True)
-    offers = BusinessOfferSerializer(source='businessoffer_set', many=True, read_only=True)
+    images = BusinessImageSerializer(source='gallery_images', many=True, read_only=True)
+    offers = BusinessOfferSerializer(many=True, read_only=True)
 
     class Meta:
         model = Business

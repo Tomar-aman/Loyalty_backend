@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Business, BusinessCategory, BusinessImage
+from .models import Business, BusinessCategory, BusinessImage, BusinessOffer
 
 @admin.register(BusinessCategory)
 class BusinessCategoryAdmin(admin.ModelAdmin):
@@ -8,7 +8,11 @@ class BusinessCategoryAdmin(admin.ModelAdmin):
     list_filter = ('is_active',)
 
 
-
+@admin.register(BusinessOffer)
+class BusinessOfferAdmin(admin.ModelAdmin):
+    list_display = ('title', 'business', 'start_date', 'end_date', 'is_active', 'created_at', 'updated_at')
+    search_fields = ('title', 'business__name')
+    list_filter = ('is_active', 'start_date', 'end_date')
 
 class BusinessImageInline(admin.TabularInline):
     model = BusinessImage

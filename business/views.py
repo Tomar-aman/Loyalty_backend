@@ -31,12 +31,11 @@ class BusinessListView(GenericAPIView):
     """
     GET /api/businesses/  -> list active businesses (summary)
     """
-    serializer_class = BusinessDetailSerializer
+    serializer_class = BusinessSerializer
     queryset = Business.objects.filter(is_active=True).select_related('category')
 
     def get_queryset(self):
         qs = super().get_queryset()
-        # optional: filter by category id ?category=<id>
         category = self.request.GET.get('category')
         search = self.request.GET.get('search')
         is_featured = self.request.GET.get('is_featured')

@@ -1278,6 +1278,7 @@ class OfferAddView(View):
         try:
             business_id = request.POST.get('business')
             title = request.POST.get('title', '').strip()
+            coupon_code = request.POST.get('coupon_code', '').strip().upper()
             description = request.POST.get('description', '').strip()
             start_date = request.POST.get('start_date')
             end_date = request.POST.get('end_date')
@@ -1294,6 +1295,7 @@ class OfferAddView(View):
             offer = BusinessOffer.objects.create(
                 business=business,
                 title=title,
+                coupon_code=coupon_code,
                 description=description,
                 start_date=start_date,
                 end_date=end_date,
@@ -1315,6 +1317,7 @@ class OfferEditView(View):
             business_id = request.POST.get('business')
             title = request.POST.get('title', '').strip()
             description = request.POST.get('description', '').strip()
+            coupon_code = request.POST.get('coupon_code', '').strip().upper()
             start_date = request.POST.get('start_date')
             end_date = request.POST.get('end_date')
             is_active = request.POST.get('is_active') == 'true'
@@ -1330,6 +1333,7 @@ class OfferEditView(View):
             offer.business = business
             offer.title = title
             offer.description = description
+            offer.coupon_code = coupon_code
             offer.start_date = start_date
             offer.end_date = end_date
             offer.is_active = is_active

@@ -181,6 +181,12 @@ class BusinessOffer(models.Model):
         related_name='offers',
         verbose_name=_("Business"),
     )
+    coupon_code = models.CharField(
+        _("Coupon Code"),
+        max_length=50,
+        null=True,
+        blank=True,
+    )
     title = models.CharField(
         _("Offer Title"),
         max_length=255,
