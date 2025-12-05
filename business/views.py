@@ -39,6 +39,9 @@ class BusinessListView(GenericAPIView):
         # optional: filter by category id ?category=<id>
         category = self.request.GET.get('category')
         search = self.request.GET.get('search')
+        is_featured = self.request.GET.get('is_featured')
+        if is_featured:
+            qs = qs.filter(is_featured=is_featured)
         if category:
             qs = qs.filter(category_id=category)
         if search:
@@ -48,7 +51,11 @@ class BusinessListView(GenericAPIView):
     def get(self, request, *args, **kwargs):
         try:
             businesses = self.get_queryset()
-            serializer = self.get_serializer(businesses, many=True, context={'request': request})
+            page = self.paginate_queryset(businesses)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            serializer = self.get_serializer(businesses, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
