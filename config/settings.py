@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'card',
     'business',
     'super_admin',
+    'contact_us',
 
 ]
 
