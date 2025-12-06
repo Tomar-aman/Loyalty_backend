@@ -203,18 +203,43 @@ class UserDetailsSerializer(serializers.ModelSerializer):
     country_id = serializers.PrimaryKeyRelatedField(
         queryset=Country.objects.all(), source='country', write_only=True, required=False, allow_null=True
     )
+    city_name = serializers.CharField(write_only=True, required=False)
+    country_name = serializers.CharField(write_only=True, required=False)
     class Meta:
         model = User
         fields = [
             'id', 'first_name', 'last_name', 'email', 'phone_number','profile_picture','customer_id',
             'country',
             'city',
+            'city_name',
+            'country_name',
             'country_code','is_active','is_temp', 'country_id', 'city_id'
         ]
     
+    def update(self, instance, validated_data):
+        # Update nested fields
+        city_name = validated_data.pop('city_name', None)
+        country_name = validated_data.pop('country_name', None)
+        print(f"Updating user details with city_name: {city_name}, country_name: {country_name}")
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        city = City.objects.only("id").filter(name__iexact=city_name).first() if city_name else None
+        country = Country.objects.only("id").filter(name__iexact=country_name).first() if country_name else None
+
+        if city is not None:
+            instance.city = city
+        else:
+            new_city = City.objects.create(name=city_name, country=country) if city_name else None
+            instance.city = new_city
+        if country is not None:
+            instance.country = country
+
+        instance.save()
+        return instance
     
-    
-         
+        
 
 class GoogleAuthSerializer(serializers.Serializer):
     token = serializers.CharField()

@@ -39,12 +39,12 @@ class BusinessOfferSerializer(serializers.ModelSerializer):
 # summary serializer for lists
 class BusinessSerializer(serializers.ModelSerializer):
     category = BusinessCategorySerializer(read_only=True)
-
+    offers = BusinessOfferSerializer(many=True, read_only=True)
     class Meta:
         model = Business
         fields = ['id','name', 'description', 'address', 'phone_number', 'email', 'website',
-            'latitude', 'longitude',
-            'logo', 'category', 'is_featured']
+            'latitude', 'longitude','offers',
+            'logo', 'category', 'is_featured', 'created_at', 'updated_at']
 
 # detailed serializer for single business view
 class BusinessDetailSerializer(serializers.ModelSerializer):
@@ -59,4 +59,20 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
             'latitude', 'longitude',
             'logo', 'category', 'is_active', 'is_featured',
             'images', 'offers', 'created_at', 'updated_at'
+        ]
+
+class PopularOfferSerializer(serializers.ModelSerializer):
+    business = BusinessSerializer(read_only=True)
+
+    class Meta:
+        model = BusinessOffer
+        fields = [
+            "id",
+            "title",
+            "coupon_code",
+            "description",
+            "start_date",
+            "end_date",
+            "is_popular",
+            "business",
         ]

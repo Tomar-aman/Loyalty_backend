@@ -200,6 +200,10 @@ class BusinessOffer(models.Model):
     end_date = models.DateTimeField(
         _("End Date"),
     )
+    is_popular = models.BooleanField(
+        _("Is Popular"),
+        default=False,
+    )
     is_active = models.BooleanField(
         _("Is Active"),
         default=True,
@@ -215,3 +219,7 @@ class BusinessOffer(models.Model):
 
     def __str__(self):
         return f"Offer: {self.title} for {self.business.name}"
+    
+    class Meta:
+        verbose_name = _("Business Offer")
+        verbose_name_plural = _("Business Offers")

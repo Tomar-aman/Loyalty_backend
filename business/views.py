@@ -8,13 +8,15 @@ from rest_framework import status
 
 from business.models import (
     BusinessCategory,
-    Business
+    Business, BusinessOffer
 )
 from business.serializers import (
     BusinessCategorySerializer,
     BusinessSerializer,
-    BusinessDetailSerializer
+    BusinessDetailSerializer,
+    PopularOfferSerializer
 )
+from django.utils import timezone
 
 class BusinessCategoryListView(GenericAPIView):
     serializer_class = BusinessCategorySerializer
@@ -70,3 +72,24 @@ class BusinessDetailView(RetrieveAPIView):
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
+
+class PopularDealsAPIView(ListAPIView):
+    """
+    Returns all active popular deals with their business details.
+    """
+    serializer_class = PopularOfferSerializer
+
+    def get_queryset(self):
+        now = timezone.now()
+        return (
+            BusinessOffer.objects
+            .select_related("business", "business__category")  # avoids N+1
+            .filter(
+                is_popular=True,
+                is_active=True,
+                business__is_active=True,
+                start_date__lte=now,
+                end_date__gte=now,
+            )
+            .order_by("-created_at")
+        )
