@@ -146,7 +146,7 @@ class ResendOTPSerializer(serializers.Serializer):
     
     def save(self, **kwargs):
         try:
-            user = User.objects.get(email=self.validated_data['email'])
+            user = User.objects.get(email=self.validated_data['email'].lower())
             # otp_code = ''.join(random.choices('0123456789', k=6))
             otp_code = str(random.randint(100000, 999999))
             otp = OTP.objects.create(user=user, otp_code=otp_code, expires_at=timezone.now() + timedelta(minutes=10))
