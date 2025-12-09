@@ -108,7 +108,7 @@ class OTPVerificationSerializer(serializers.Serializer):
         return attrs
 
     def _get_user(self, attrs):
-        filters = {'email': attrs.get('email')} if attrs.get('email') else {'phone_number': attrs.get('phone_number')}
+        filters = {'email': attrs.get('email').lower()} if attrs.get('email') else {'phone_number': attrs.get('phone_number')}
         user = User.objects.filter(**filters).first()
         if not user:
             raise serializers.ValidationError({
