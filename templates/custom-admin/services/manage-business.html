@@ -48,6 +48,8 @@
                           data-category-id="{{ business.category.id }}"
                           data-description="{{ business.description|default_if_none:''|escapejs }}"
                           data-address="{{ business.address|default_if_none:''|escapejs }}"
+                          data-latitude="{{ business.latitude|default_if_none:'' }}"
+                          data-longitude="{{ business.longitude|default_if_none:'' }}"
                           data-phone-number="{{ business.phone_number|default_if_none:''|escapejs }}"
                           data-email="{{ business.email|default_if_none:''|escapejs }}"
                           data-website="{{ business.website|default_if_none:''|escapejs }}"
@@ -136,10 +138,13 @@
                         placeholder="Enter Description" rows="2"></textarea>
             </div>
 
+            <!-- In ADD BUSINESS MODAL, update address section: -->
             <div class="col-md-12">
               <label class="inputLabel">Address</label>
-              <textarea name="address" class="customInput"
-                        placeholder="Enter Address" rows="2"></textarea>
+              <input type="text" id="add_address_autocomplete" name="address" class="customInput" placeholder="Search for address...">
+              <input type="hidden" id="add_latitude" name="latitude">
+              <input type="hidden" id="add_longitude" name="longitude">
+              <small class="text-muted">Start typing to search for an address</small>
             </div>
 
             <div class="col-md-6">
@@ -266,10 +271,13 @@
                         class="customInput" rows="2"></textarea>
             </div>
 
+            <!-- In EDIT BUSINESS MODAL, update address section: -->
             <div class="col-md-12">
               <label class="inputLabel">Address</label>
-              <textarea id="edit_address" name="address"
-                        class="customInput" rows="2"></textarea>
+              <input type="text" id="edit_address_autocomplete" name="address" class="customInput" placeholder="Search for address...">
+              <input type="hidden" id="edit_latitude" name="latitude">
+              <input type="hidden" id="edit_longitude" name="longitude">
+              <small class="text-muted">Start typing to search for an address</small>
             </div>
 
             <div class="col-md-6">
@@ -402,9 +410,86 @@
 
 
 {% block extrajs %}
+
+<script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=places"></script>
 <script>
 $(document).ready(function() {
 
+// ===== GOOGLE PLACES AUTOCOMPLETE FOR ADD MODAL =====
+function initAddAutocomplete() {
+    const addInput = document.getElementById('add_address_autocomplete');
+    if (!addInput) return;
+
+    const addAutocomplete = new google.maps.places.Autocomplete(addInput, {
+        types: ['geocode'],
+        fields: ['formatted_address', 'geometry', 'address_components', 'name']
+    });
+
+    addAutocomplete.addListener('place_changed', function() {
+        const place = addAutocomplete.getPlace();
+        
+        if (!place.geometry) {
+            alert('No details available for this address');
+            return;
+        }
+
+        // Set the full address
+        $('#add_address_autocomplete').val(place.formatted_address);
+        
+        // Set latitude and longitude
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        $('#add_latitude').val(lat);
+        $('#add_longitude').val(lng);
+
+        console.log('Address:', place.formatted_address);
+        console.log('Latitude:', lat);
+        console.log('Longitude:', lng);
+    });
+}
+
+// ===== GOOGLE PLACES AUTOCOMPLETE FOR EDIT MODAL =====
+function initEditAutocomplete() {
+    const editInput = document.getElementById('edit_address_autocomplete');
+    if (!editInput) return;
+
+    const editAutocomplete = new google.maps.places.Autocomplete(editInput, {
+        types: ['address'],
+        componentRestrictions: { country: ['us', 'in'] }, // Restrict to specific countries (optional)
+        fields: ['formatted_address', 'geometry', 'address_components', 'name']
+    });
+
+    editAutocomplete.addListener('place_changed', function() {
+        const place = editAutocomplete.getPlace();
+        
+        if (!place.geometry) {
+            alert('No details available for this address');
+            return;
+        }
+
+        // Set the full address
+        $('#edit_address_autocomplete').val(place.formatted_address);
+        
+        // Set latitude and longitude
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        $('#edit_latitude').val(lat);
+        $('#edit_longitude').val(lng);
+
+        console.log('Address:', place.formatted_address);
+        console.log('Latitude:', lat);
+        console.log('Longitude:', lng);
+    });
+}
+
+// Initialize autocomplete when modals are shown
+$('#addBusinessModal').on('shown.bs.modal', function() {
+    initAddAutocomplete();
+});
+
+$('#editBusinessModal').on('shown.bs.modal', function() {
+    initEditAutocomplete();
+});
 
 // ===== ADD MODAL GALLERY UPLOAD HANDLERS =====
 const addGalleryUploadArea = document.getElementById('addGalleryUploadArea');
@@ -591,6 +676,8 @@ window.unmarkImageForDeletion = function(imageId, button, imageDiv) {
         var categoryId = $(this).data('category-id');
         var description = $(this).data('description');
         var address = $(this).data('address');
+        var latitude = $(this).data('latitude');
+        var longitude = $(this).data('longitude');
         var phoneNumber = $(this).data('phone-number');
         var email = $(this).data('email');
         var website = $(this).data('website');
@@ -606,6 +693,8 @@ window.unmarkImageForDeletion = function(imageId, button, imageDiv) {
         $('#edit_category').val(categoryId).trigger('change.select2');
         $('#edit_description').val(description);
         $('#edit_address').val(address);
+        $('#edit_latitude').val(latitude);
+        $('#edit_longitude').val(longitude);
         $('#edit_phone_number').val(phoneNumber);
         $('#edit_email').val(email);
         $('#edit_website').val(website);

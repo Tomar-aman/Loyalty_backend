@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import login, authenticate, logout
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import user_passes_test
@@ -13,7 +14,7 @@ from django.urls import reverse
 from django.contrib.auth import update_session_auth_hash
 from django.core.mail import get_connection, EmailMessage
 from django.db.models import Q
-from settings.models import SMTPSettings
+from settings.models import SMTPSettings, StipeKeySettings, GoogleMapsSettings, FirebaseSettings
 from django.core.paginator import Paginator
 from django.db import models
 from card.models import Card, CardBenefit
@@ -112,6 +113,30 @@ class AdminProfileView(View):
     
         return redirect('admin_panel:profile')
 
+@method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
+class UpdateSMTPSettingsView(View):
+    def post(self, request):
+        host = request.POST.get('smtp_host')
+        port = request.POST.get('smtp_port')
+        username = request.POST.get('smtp_username')
+        password = request.POST.get('smtp_password')
+        from_email = request.POST.get('from_email')
+        use_tls = request.POST.get('use_tls') == 'on'
+        
+        try:
+            smtp_settings, created = SMTPSettings.objects.get_or_create(id=1)
+            smtp_settings.host = host
+            smtp_settings.port = port
+            smtp_settings.username = username
+            smtp_settings.password = password
+            smtp_settings.from_email = from_email
+            smtp_settings.use_tls = use_tls
+            smtp_settings.save()
+            messages.success(request, 'SMTP settings updated successfully')
+        except Exception as e:
+            messages.error(request, f'Error updating SMTP settings: {str(e)}')
+        
+        return redirect('admin_panel:profile')
 
 @method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
 class ChangePasswordView(View):
@@ -1127,10 +1152,13 @@ class BusinessListView(TemplateView):
                 models.Q(name__icontains=search_query) |
                 models.Q(description__icontains=search_query)
             )
+        
+        api_key = GoogleMapsSettings.objects.first().api_key
         businesses = businesses.order_by('-created_at')
         paginator = Paginator(businesses, 25)
         context['businesses'] = paginator.get_page(page)
         context['categories'] = BusinessCategory.objects.filter(is_active=True)
+        context['GOOGLE_MAPS_API_KEY'] = api_key if api_key else settings.GOOGLE_MAPS_API_KEY
         context['admins'] = User.objects.filter(is_admin=True, is_active=True)
         context['search_query'] = search_query
         return context
@@ -1143,6 +1171,8 @@ class BusinessAddView(View):
         category_id = request.POST.get('category')
         description = request.POST.get('description', '').strip()
         address = request.POST.get('address', '').strip()
+        latitude = request.POST.get('latitude', '').strip()
+        longitude = request.POST.get('longitude', '').strip()
         phone_number = request.POST.get('phone_number', '').strip()
         email = request.POST.get('email', '').strip()
         website = request.POST.get('website', '').strip()
@@ -1165,6 +1195,8 @@ class BusinessAddView(View):
             category=category,
             description=description,
             address=address,
+            latitude=latitude if latitude else None,
+            longitude=longitude if longitude else None,
             phone_number=phone_number,
             email=email,
             website=website,
@@ -1190,6 +1222,8 @@ class BusinessEditView(View):
         category_id = request.POST.get('category')
         description = request.POST.get('description', '').strip()
         address = request.POST.get('address', '').strip()
+        latitude = request.POST.get('latitude', '').strip()
+        longitude = request.POST.get('longitude', '').strip()
         phone_number = request.POST.get('phone_number', '').strip()
         email = request.POST.get('email', '').strip()
         website = request.POST.get('website', '').strip()
@@ -1212,6 +1246,8 @@ class BusinessEditView(View):
         business.address = address
         business.phone_number = phone_number
         business.email = email
+        business.latitude = latitude if latitude else None
+        business.longitude = longitude if longitude else None
         business.website = website
         business.is_active = is_active
         business.is_featured = is_featured
@@ -1372,3 +1408,131 @@ class OfferToggleStatusView(View):
             messages.error(request, f'Error: {str(e)}')
         
         return redirect('admin_panel:manage_offers')
+    
+
+
+@method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
+class ManageAPISettingsView(TemplateView):
+    template_name = 'custom-admin/services/manage-api.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get or create settings instances
+        # chatgpt_settings = ChatGPTSettings.objects.first()
+        # if not chatgpt_settings:
+        #     chatgpt_settings = ChatGPTSettings.objects.create()
+
+        stripe_settings = StipeKeySettings.objects.first()
+        if not stripe_settings:
+            stripe_settings = StipeKeySettings.objects.create()
+
+        google_maps_settings = GoogleMapsSettings.objects.first()
+        if not google_maps_settings:
+            google_maps_settings = GoogleMapsSettings.objects.create()
+
+        firebase_settings = FirebaseSettings.objects.first()
+        if not firebase_settings:
+            firebase_settings = FirebaseSettings.objects.create()
+
+        context.update({
+            'title': 'Manage API Settings',
+            # 'chatgpt_settings': chatgpt_settings,
+            'stripe_settings': stripe_settings,
+            'google_maps_settings': google_maps_settings,
+            'firebase_settings': firebase_settings,
+        })
+        return context
+
+# @method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
+# class UpdateChatGPTSettingsView(View):
+#     def post(self, request, api_id):
+#         try:
+#             chatgpt_settings = get_object_or_404(ChatGPTSettings, pk=api_id)
+            
+#             chatgpt_settings.model = request.POST.get('model', chatgpt_settings.model)
+#             chatgpt_settings.api_key = request.POST.get('api_key', chatgpt_settings.api_key)
+#             chatgpt_settings.status = request.POST.get('is_active', 'false') == 'true'
+            
+#             chatgpt_settings.save()
+#             messages.success(request, 'ChatGPT settings updated successfully')
+            
+#         except Exception as e:
+#             messages.error(request, f'Error updating ChatGPT settings: {str(e)}')
+        
+#         return redirect('admin_panel:manage_api_settings')
+
+@method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
+class UpdateStripeSettingsView(View):
+    def post(self, request, stripe_id):
+        try:
+            stripe_settings = get_object_or_404(StipeKeySettings, pk=stripe_id)
+            
+            stripe_settings.public_key = request.POST.get('publishable_key', stripe_settings.public_key)
+            stripe_settings.secret_key = request.POST.get('secret_key', stripe_settings.secret_key)
+            stripe_settings.currency = request.POST.get('currency', stripe_settings.currency)
+            stripe_settings.version = request.POST.get('api_version', stripe_settings.version)
+            
+            stripe_settings.save()
+            messages.success(request, 'Stripe settings updated successfully')
+            
+        except Exception as e:
+            messages.error(request, f'Error updating Stripe settings: {str(e)}')
+        
+        return redirect('admin_panel:manage_api_settings')
+
+@method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
+class UpdateGoogleMapsSettingsView(View):
+    def post(self, request, maps_id):
+        try:
+            maps_settings = get_object_or_404(GoogleMapsSettings, pk=maps_id)
+            
+            maps_settings.api_key = request.POST.get('api_key', maps_settings.api_key)
+            
+            maps_settings.save()
+            messages.success(request, 'Google Maps settings updated successfully')
+            
+        except Exception as e:
+            messages.error(request, f'Error updating Google Maps settings: {str(e)}')
+        
+        return redirect('admin_panel:manage_api_settings')
+
+@method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
+class UpdateFirebaseSettingsView(View):
+    def post(self, request, notification_id):
+        try:
+            firebase_settings = get_object_or_404(FirebaseSettings, pk=notification_id)
+            
+            if 'config_file' in request.FILES:
+                # Delete old file if exists
+                if firebase_settings.config_file:
+                    if default_storage.exists(firebase_settings.config_file.name):
+                        default_storage.delete(firebase_settings.config_file.name)
+                
+                firebase_settings.config_file = request.FILES['config_file']
+                firebase_settings.save()
+                
+                messages.success(request, 'Firebase notification settings updated successfully')
+            else:
+                messages.error(request, 'Please select a file to upload')
+                
+        except Exception as e:
+            messages.error(request, f'Error updating Firebase settings: {str(e)}')
+        
+        return redirect('admin_panel:manage_api_settings')
+
+# @method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
+# class ToggleChatGPTStatusView(View):
+#     def post(self, request, api_id):
+#         try:
+#             chatgpt_settings = get_object_or_404(ChatGPTSettings, pk=api_id)
+#             chatgpt_settings.status = not chatgpt_settings.status
+#             chatgpt_settings.save()
+            
+#             status = 'activated' if chatgpt_settings.status else 'deactivated'
+#             messages.success(request, f'ChatGPT API {status} successfully')
+            
+#         except Exception as e:
+#             messages.error(request, f'Error toggling ChatGPT status: {str(e)}')
+        
+#         return redirect('admin_panel:manage_api_settings')

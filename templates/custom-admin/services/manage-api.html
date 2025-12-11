@@ -21,7 +21,7 @@
             {% endfor %}
         {% endif %}
 
-        <div class="topContent">
+        {% comment %} <div class="topContent">
             <h2 class="H4Heading mt-4">Manage ChatGPT API</h2>
         </div>
 
@@ -45,7 +45,8 @@
                             <input class="form-check-input toggle-status" 
                                    type="checkbox" 
                                    {% if chatgpt_settings.status %}checked{% endif %}
-                                   disabled>
+                                   data-api-id="{{ chatgpt_settings.id }}"
+                                   onchange="toggleChatGPTStatus(this)">
                         </div>
                     </td>
                     <td>
@@ -61,11 +62,10 @@
               </tbody>
             </table>
           </div>
-        </div>
-
+        </div> {% endcomment %}
 
         <div class="topContent">
-            <h2 class="H4Heading mt-4">Manage Stripe </h2>
+            <h2 class="H4Heading mt-4">Manage Stripe</h2>
         </div>
 
         <div class="scrollableTable">
@@ -79,32 +79,60 @@
                   <th>Actions</th>
                 </tr>
                 <tbody>
-                  {% comment %} {% for notification in notification_settings %} {% endcomment %}
                   <tr>
-                    <td>{{ stripe_settings.publishable_key|truncatechars:20  }}</td>
-                    <td>{{ stripe_settings.api_version }}</td>
+                    <td>{{ stripe_settings.public_key|truncatechars:20  }}</td>
+                    <td>{{ stripe_settings.version }}</td>
                     <td>{{ stripe_settings.currency }}</td>
-                    <td>{{ stripe_settings.updated_at }}</td>
+                    <td>{{ stripe_settings.updated_at|date:"d/m/Y" }}</td>
                     <td>
-                        <button class="tableActionBtn edit-strip" 
-                                data-strip-id="{{ stripe_settings.id }}"
-                                data-publishable-key="{{ stripe_settings.publishable_key }}"
+                        <button class="tableActionBtn edit-stripe" 
+                                data-stripe-id="{{ stripe_settings.id }}"
+                                data-publishable-key="{{ stripe_settings.public_key }}"
                                 data-secret-key="{{ stripe_settings.secret_key}}"
                                 data-currency="{{ stripe_settings.currency}}"
-                                data-api-version="{{ stripe_settings.api_version}}"
+                                data-api-version="{{ stripe_settings.version}}"
                                 >
                             <i class="fa fa-edit"></i>
                         </button>
                     </td>
-                </tr>
-                  {% comment %} {% endfor %} {% endcomment %}
+                  </tr>
                 </tbody>
               </table>
             </div>
           </div>
 
         <div class="topContent">
-            <h2 class="H4Heading mt-4">Manage Notification</h2>
+            <h2 class="H4Heading mt-4">Manage Google Maps API</h2>
+        </div>
+
+        <div class="scrollableTable">
+            <div>
+              <table cellpadding="1" cellspacing="1">
+                <tr>
+                  <th>API Key</th>
+                  <th>Updated at</th>
+                  <th>Actions</th>
+                </tr>
+                <tbody>
+                  <tr>
+                    <td>{{ google_maps_settings.api_key|truncatechars:20  }}</td>
+                    <td>{{ google_maps_settings.updated_at|date:"d/m/Y" }}</td>
+                    <td>
+                        <button class="tableActionBtn edit-google-maps" 
+                                data-maps-id="{{ google_maps_settings.id }}"
+                                data-api-key="{{ google_maps_settings.api_key }}"
+                                >
+                            <i class="fa fa-edit"></i>
+                        </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        <div class="topContent">
+            <h2 class="H4Heading mt-4">Manage Firebase Notification</h2>
         </div>
 
         <div class="scrollableTable">
@@ -116,14 +144,13 @@
                   <th>Actions</th>
                 </tr>
                 <tbody>
-                  {% comment %} {% for notification in notification_settings %} {% endcomment %}
                   <tr>
-                    <td>{{ notification_settings.file_name }}</td>
+                    <td>{{ firebase_settings.file_name|default:"No file uploaded" }}</td>
                     <td>
-                        {% if notification_settings.config_file %}
-                            <a href="{{ notification_settings.config_file.url }}" 
+                        {% if firebase_settings.config_file %}
+                            <a href="{{ firebase_settings.config_file.url }}" 
                                class="tableActionBtn" 
-                               download="{{ notification_settings.file_name }}">
+                               download="{{ firebase_settings.file_name }}">
                                 <i class="fa fa-download"></i>
                             </a>
                         {% else %}
@@ -131,107 +158,24 @@
                         {% endif %}
                     </td>
                     <td>
-                        <button class="tableActionBtn edit-notification" 
-                                data-notification-id="{{ notification_settings.id }}"
-                                data-config-file="{{ notification_settings.config_file }}">
+                        <button class="tableActionBtn edit-firebase" 
+                                data-firebase-id="{{ firebase_settings.id }}"
+                                data-config-file="{{ firebase_settings.config_file }}">
                             <i class="fa fa-edit"></i>
                         </button>
                     </td>
-                </tr>
-                  {% comment %} {% endfor %} {% endcomment %}
+                  </tr>
                 </tbody>
               </table>
             </div>
           </div>
 
-
-
       </div>
     </div>
   </div>
 </section>
-
-<!-- Edit Notification Modal -->
-<div class="modal fade customModal addDataModal" id="editNotificationModal">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h6 class="H2Heading">Edit Notification File</h6>
-                <button type="button" class="hideClose_Modal" data-bs-dismiss="modal">
-                    <img src="{% static 'admin/images/close.png' %}" alt="" class="img-fluid">
-                </button>
-            </div>
-
-            <div class="modal-body">
-                <form method="post" id="editNotificationForm" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="row row-gap-4">
-                        <div class="col-md-12">
-                            <label class="inputLabel">Config File</label>
-                            <p class="text-muted small mb-2">Select a new file to update the configuration</p>
-                            <input type="file" name="config_file" id="edit_file" class="customInput" accept=".json" required>
-                        </div>
-
-                        <div class="modalFooter">
-                            <button type="button" class="customButton" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="customButton ms-2">Update</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Strip Settings Model -->
-<div class="modal fade customModal addDataModal" id="editStripeModal" tabindex="-1" aria-labelledby="editStripeModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h6 class="H2Heading">Edit Stripe Settings</h6>
-                <button type="button" class="hideClose_Modal" data-bs-dismiss="modal">
-                    <img src="{% static 'admin/images/close.png' %}" alt="" class="img-fluid">
-                </button>
-            </div>
-
-            <div class="modal-body">
-                <form method="post" id="editStripeForm">
-                    {% csrf_token %}
-                    <div class="row row-gap-4">
-                        <div class="col-md-12">
-                            <label class="inputLabel">Publishable Key</label>
-                            <input type="text" name="publishable_key" id="edit_publishable_key" class="customInput" placeholder="Enter Publishable Key">
-                        </div>
-
-                        <div class="col-md-12">
-                            <label class="inputLabel">Secret Key</label>
-                            <input type="password" name="secret_key" id="edit_secret_key" class="customInput" placeholder="Enter Secret Key">
-                        </div>
-
-                        <div class="col-md-12">
-                            <label class="inputLabel">Currency Code</label>
-                            <input type="text" name="currency" id="edit_currency" class="customInput" placeholder="Enter Currency Key">
-                        </div>
-                        <div class="col-md-12">
-                            <label class="inputLabel">API Version</label>
-                            <input type="text" name="api_version" id="edit_api_version" class="customInput" placeholder="Enter API Version">
-                        </div>
-
-                 
-
-                        <div class="modalFooter">
-                            <button type="button" class="customButton" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="customButton ms-2">Update</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-<!-- Edit API Model -->
+{% comment %} 
+<!-- Edit ChatGPT Modal -->
 <div class="modal fade customModal addDataModal" id="editChatGPTAPIModal" tabindex="-1" aria-labelledby="editAPIModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -248,12 +192,12 @@
                     <div class="row row-gap-4">
                         <div class="col-md-12">
                             <label class="inputLabel">Model</label>
-                            <input type="text" id="edit_model" name="model" class="customInput" placeholder="Enter Valid Model Name">
+                            <input type="text" id="edit_model" name="model" class="customInput" placeholder="Enter Valid Model Name" required>
                         </div>
 
                         <div class="col-md-12">
                             <label class="inputLabel">API Key</label>
-                            <input type="text" name="api_key" id="edit_api_key" class="customInput" placeholder="Enter API Key">
+                            <input type="text" name="api_key" id="edit_api_key" class="customInput" placeholder="Enter API Key" required>
                         </div>
 
                         <div class="col-md-12">
@@ -267,6 +211,115 @@
                                     </select>
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="modalFooter">
+                            <button type="button" class="customButton" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="customButton ms-2">Update</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div> {% endcomment %}
+
+<!-- Edit Stripe Settings Modal -->
+<div class="modal fade customModal addDataModal" id="editStripeModal" tabindex="-1" aria-labelledby="editStripeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="H2Heading">Edit Stripe Settings</h6>
+                <button type="button" class="hideClose_Modal" data-bs-dismiss="modal">
+                    <img src="{% static 'admin/images/close.png' %}" alt="" class="img-fluid">
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <form method="post" id="editStripeForm">
+                    {% csrf_token %}
+                    <div class="row row-gap-4">
+                        <div class="col-md-12">
+                            <label class="inputLabel">Publishable Key</label>
+                            <input type="text" name="publishable_key" id="edit_publishable_key" class="customInput" placeholder="Enter Publishable Key" required>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="inputLabel">Secret Key</label>
+                            <input type="password" name="secret_key" id="edit_secret_key" class="customInput" placeholder="Enter Secret Key" required>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="inputLabel">Currency Code</label>
+                            <input type="text" name="currency" id="edit_currency" class="customInput" placeholder="Enter Currency Code (e.g., USD)" required>
+                        </div>
+                        
+                        <div class="col-md-12">
+                            <label class="inputLabel">API Version</label>
+                            <input type="text" name="api_version" id="edit_api_version" class="customInput" placeholder="Enter API Version" required>
+                        </div>
+
+                        <div class="modalFooter">
+                            <button type="button" class="customButton" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="customButton ms-2">Update</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Google Maps Settings Modal -->
+<div class="modal fade customModal addDataModal" id="editGoogleMapsModal" tabindex="-1" aria-labelledby="editGoogleMapsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="H2Heading">Edit Google Maps API Settings</h6>
+                <button type="button" class="hideClose_Modal" data-bs-dismiss="modal">
+                    <img src="{% static 'admin/images/close.png' %}" alt="" class="img-fluid">
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <form method="post" id="editGoogleMapsForm">
+                    {% csrf_token %}
+                    <div class="row row-gap-4">
+                        <div class="col-md-12">
+                            <label class="inputLabel">API Key</label>
+                            <input type="text" name="api_key" id="edit_maps_api_key" class="customInput" placeholder="Enter Google Maps API Key" required>
+                        </div>
+
+                        <div class="modalFooter">
+                            <button type="button" class="customButton" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="customButton ms-2">Update</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Firebase Settings Modal -->
+<div class="modal fade customModal addDataModal" id="editFirebaseModal">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="H2Heading">Edit Firebase Notification Settings</h6>
+                <button type="button" class="hideClose_Modal" data-bs-dismiss="modal">
+                    <img src="{% static 'admin/images/close.png' %}" alt="" class="img-fluid">
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <form method="post" id="editFirebaseForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row row-gap-4">
+                        <div class="col-md-12">
+                            <label class="inputLabel">Config File</label>
+                            <p class="text-muted small mb-2">Select a new JSON file to update the Firebase configuration</p>
+                            <input type="file" name="config_file" id="edit_firebase_file" class="customInput" accept=".json" required>
                         </div>
 
                         <div class="modalFooter">
@@ -296,23 +349,13 @@ $(document).ready(function() {
         $('#edit_model').val(chatGPTModel);
         $('#edit_status').val(isActive ? "true" : "false").trigger('change.select2');
 
-        
         // Update form action
         $('#editChatGPTAPIForm').attr('action', `/chatgpt-settings/${chatGPTId}/edit/`);
         $('#editChatGPTAPIModal').modal('show');
-    })
+    });
 
-    // $('.edit-notification').click(function() {
-    //     var notificationId = $(this).data('notification-id');
-    //     var configFile = $(this).data('config-file');
-        
-    //     // Update form action
-    //     $('#editNotificationForm').attr('action', `/notification-settings/${notificationId}/edit/`);
-    //     $('#editNotificationModal').modal('show');
-    // });
-
-    $('.edit-strip').click(function() {
-        var stripId = $(this).data('strip-id');
+    $('.edit-stripe').click(function() {
+        var stripeId = $(this).data('stripe-id');
         var publishableKey = $(this).data('publishable-key');
         var secretKey = $(this).data('secret-key');
         var currency = $(this).data('currency');
@@ -323,11 +366,51 @@ $(document).ready(function() {
         $('#edit_currency').val(currency);
         $('#edit_api_version').val(apiVersion);
 
-        $('#editStripeForm').attr('action', `/stripe-settings/${stripId}/edit/`);
+        $('#editStripeForm').attr('action', `/stripe-settings/${stripeId}/edit/`);
         $('#editStripeModal').modal('show'); 
-    })
+    });
 
-    
+    $('.edit-google-maps').click(function() {
+        var mapsId = $(this).data('maps-id');
+        var apiKey = $(this).data('api-key');
+
+        $('#edit_maps_api_key').val(apiKey);
+
+        $('#editGoogleMapsForm').attr('action', `/google-maps-settings/${mapsId}/edit/`);
+        $('#editGoogleMapsModal').modal('show'); 
+    });
+
+    $('.edit-firebase').click(function() {
+        var firebaseId = $(this).data('firebase-id');
+        
+        // Update form action
+        $('#editFirebaseForm').attr('action', `/firebase-settings/${firebaseId}/edit/`);
+        $('#editFirebaseModal').modal('show');
+    });
+
 });
+
+{% comment %} function toggleChatGPTStatus(checkbox) {
+    const apiId = checkbox.dataset.apiId;
+    const isChecked = checkbox.checked;
+    
+    // Send AJAX request to toggle status
+    $.ajax({
+        url: `/chatgpt-settings/${apiId}/toggle/`,
+        method: 'POST',
+        data: {
+            'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val(),
+        },
+        success: function(response) {
+            // Status updated successfully
+            console.log('ChatGPT status toggled successfully');
+        },
+        error: function(xhr, status, error) {
+            // Revert checkbox state on error
+            checkbox.checked = !isChecked;
+            alert('Error updating ChatGPT status. Please try again.');
+        }
+    });
+} {% endcomment %}
 </script>
 {% endblock %}

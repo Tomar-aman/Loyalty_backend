@@ -256,3 +256,6 @@ LOGGING = {
         },
     }
 }
+
+# Google Maps API Key
+GOOGLE_MAPS_API_KEY = config('GOOGLE_MAPS_API_KEY', default='')
