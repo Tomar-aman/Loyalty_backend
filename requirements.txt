@@ -1,7 +1,9 @@
+APScheduler==3.11.1
 asgiref==3.10.0
 certifi==2025.11.12
 charset-normalizer==3.4.4
 Django==5.2.8
+django-apscheduler==0.7.0
 django-cors-headers==4.9.0
 djangorestframework==3.16.1
 djangorestframework_simplejwt==5.5.1
@@ -21,5 +23,6 @@ rest-framework-simplejwt==0.0.2
 sqlparse==0.5.3
 typing_extensions==4.15.0
 tzdata==2025.2
+tzlocal==5.3.1
 uritemplate==4.2.0
 urllib3==2.5.0

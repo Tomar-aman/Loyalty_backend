@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from users.managers import UserManager
+from config.models import BaseModel
 
 class User(AbstractUser):
     username = None
@@ -275,3 +276,26 @@ class UserSearchHistory(models.Model):
 
     class Meta:
         ordering = ["-searched_at"]
+
+
+class UserSubscription(BaseModel):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name=_('user'),
+        help_text=_('The user who subscribed to the newsletter')
+    )
+    email = models.EmailField(
+        _('email'),
+        help_text=_('The email address of the subscriber')
+    )
+    subscribed_at = models.DateTimeField(
+        _('subscribed at'),
+        auto_now_add=True,
+        help_text=_('The date and time when the user subscribed')
+    )
+
+    class Meta:
+        verbose_name = _('user subscription')
+        verbose_name_plural = _('user subscriptions')
+        unique_together = ('user', 'email')

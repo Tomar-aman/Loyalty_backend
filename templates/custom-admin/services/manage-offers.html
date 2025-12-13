@@ -55,6 +55,7 @@
                 <th>Business</th>
                 <th>Offer Title</th>
                 <th>Description</th>
+                <th>Popular</th>
                 <th>Start Date</th>
                 <th>End Date</th>
                 <th>Status</th>
@@ -68,6 +69,13 @@
                 <td>{{ offer.business.name }}</td>
                 <td>{{ offer.title|truncatewords:5 }}</td>
                 <td>{{ offer.description|truncatewords:8 }}</td>
+                <td>
+                  {% if offer.is_popular %}
+                  <span class="badge bg-success">Yes</span>
+                  {% else %}
+                  <span class="badge bg-secondary">No</span>
+                  {% endif %}
+                </td>
                 <td>{{ offer.start_date|date:"d/m/Y H:i" }}</td>
                 <td>{{ offer.end_date|date:"d/m/Y H:i" }}</td>
                 {% comment %}
@@ -108,6 +116,7 @@
                     data-title="{{ offer.title|escapejs }}"
                     data-description="{{ offer.description|escapejs }}"
                     data-start-date="{{ offer.start_date|date:'Y-m-d\TH:i' }}"
+                    data-is-popular="{{ offer.is_popular }}"
                     data-coupon-code="{{ offer.coupon_code|escapejs }}"
                     data-end-date="{{ offer.end_date|date:'Y-m-d\TH:i' }}"
                     data-is-active="{{ offer.is_active }}"
@@ -337,11 +346,18 @@
                 required
               />
             </div>
-            <div class="col-md-12">
+            <div class="col-md-6">
               <label class="inputLabel">Status</label>
               <select id="edit_is_active" name="is_active" class="customInput">
                 <option value="true">Active</option>
                 <option value="false">Inactive</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="inputLabel">Popular</label>
+              <select id="edit_is_popular" name="is_popular" class="customInput">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
               </select>
             </div>
             <div class="modalFooter">
@@ -416,16 +432,14 @@
       var businessId = $(this).data("business-id");
       var title = $(this).data("title");
       var description = $(this).data("description");
+      var isPopular = $(this).data("is-popular");
       var couponCode = $(this).data("coupon-code");
       var startDate = $(this).data("start-date");
       var endDate = $(this).data("end-date");
-      var isActive = $(this).data("is-active") ? "true" : "false";
+      var isActive = $(this).data("is-active");
       var editUrl = $(this).data("edit-url");
 
-      console.log("Editing offer ID:", offerId);
-      console.log("Coupon Code:", couponCode);
-      console.log("title:", title);
-
+      console.log("isPopular:", isActive.toString());
       $("#edit_offer_id").val(offerId);
       $("#edit_business").val(businessId);
       $("#edit_title").val(title);
@@ -433,7 +447,8 @@
       $("#edit_coupon_code").val(couponCode);
       $("#edit_start_date").val(startDate);
       $("#edit_end_date").val(endDate);
-      $("#edit_is_active").val(isActive);
+      $("#edit_is_active").val(isActive.toLowerCase()).trigger('change.select2');
+      $("#edit_is_popular").val(isPopular.toLowerCase().toString()).trigger('change.select2');
       $("#editOfferForm").attr("action", editUrl);
     });
 

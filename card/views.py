@@ -1,8 +1,8 @@
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import CardSerializer
-from .models import Card
+from .serializers import CardSerializer, UserCardSerializer, BuyCardSerializer
+from .models import Card, UserCard
 
 class CardListView(GenericAPIView):
     queryset = Card.objects.all().order_by('price')
@@ -12,3 +12,30 @@ class CardListView(GenericAPIView):
         cards = self.get_queryset()
         serializer = self.get_serializer(cards, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class BuyCardView(GenericAPIView):
+    serializer_class = BuyCardSerializer
+
+    def post(self, request):
+        serializer = BuyCardSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        user_card = serializer.save()
+
+        return Response({
+            "message": "Card purchased successfully",
+            "card_id": user_card.card.id,
+            "start_at": user_card.start_at,
+            "end_at": user_card.end_at
+        }, status=status.HTTP_201_CREATED)
+
+class UserCardView(GenericAPIView):
+    serializer_class = UserCardSerializer
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            user_cards = UserCard.objects.get(user=request.user, is_active=True)
+            serializer = self.get_serializer(user_cards)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except UserCard.DoesNotExist:
+            return Response({"detail": "No active card found for the user."}, status=status.HTTP_404_NOT_FOUND)
+        
