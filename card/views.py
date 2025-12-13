@@ -37,5 +37,7 @@ class UserCardView(GenericAPIView):
             serializer = self.get_serializer(user_cards)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except UserCard.DoesNotExist:
-            return Response({"detail": "No active card found for the user."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "No active card found for the user."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
