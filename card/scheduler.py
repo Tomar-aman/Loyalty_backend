@@ -31,7 +31,7 @@ def start_scheduler():
     scheduler.add_job(
         expire_cards_job,
         "interval",
-        minutes=1,
+        minutes=180,
         id="expire_cards_job",
         replace_existing=True
     )
