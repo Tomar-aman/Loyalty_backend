@@ -20,6 +20,8 @@ from django.db import models
 from card.models import Card, CardBenefit , UserCard
 from django.http import JsonResponse
 import json
+import datetime
+from django.utils import timezone
 from news.models import NewsArticle
 from django.core.files.storage import default_storage
 from business.models import Business, BusinessCategory, BusinessImage, BusinessOffer
@@ -49,7 +51,6 @@ class CustomAdminLoginView(View):
         email = request.POST.get('email').lower()
         password = request.POST.get('password')
         user = authenticate(request, username=email, password=password)
-        
         if user is not None and is_admin(user):
             login(request, user)
             next_url = request.POST.get('next','')
@@ -409,8 +410,40 @@ class AdminToggleStatusView(View):
         return redirect('admin_panel:manage_admins')
 
 
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class AdminPasswordReset(View):
+    def post(self, request, admin_id):
+        User = get_user_model()
+
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+
+        # Validation
+        if not password or not confirm_password:
+            messages.error(request, "Both password fields are required.")
+            return redirect('admin_panel:manage_admins')
+
+        if password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+            return redirect('admin_panel:manage_admins')
+        if len(password) < 8:
+            messages.error(request, "Password must be at least 8 characters long.")
+            return redirect('admin_panel:manage_admins')
+
+        # Get admin user
+        admin_user = get_object_or_404(User, id=admin_id)
+
+        # Set new password securely
+        admin_user.set_password(password)
+        admin_user.save(update_fields=["password"])
+
+        messages.success(request, "Password reset successfully.")
+        return redirect("admin_panel:manage_admins")  # adjust redirect if needed
+
+            
+
 # Keep UserListView accessible to regular admins
-@method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
 class UserListView(TemplateView):
     template_name = 'custom-admin/services/manage-user.html'
 
@@ -438,7 +471,7 @@ class UserListView(TemplateView):
         context['title'] = 'User Management'
         return context
   
-@method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
 class UserToggleStatusView(View):
     def post(self, request, user_id):
         User = get_user_model()
@@ -1138,7 +1171,7 @@ class CategoryDetailAPIView(View):
 
 
 # BUSINESS MANAGEMENT VIEWS
-@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+@method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
 class BusinessListView(TemplateView):
     template_name = 'custom-admin/services/manage-business.html'
 
@@ -1146,7 +1179,11 @@ class BusinessListView(TemplateView):
         context = super().get_context_data(**kwargs)
         search_query = self.request.GET.get('search', '')
         page = self.request.GET.get('page', 1)
+        user = self.request.user
         businesses = Business.objects.select_related('category', 'owner').all()
+        if user.is_admin and not user.is_superadmin:
+            businesses = businesses.filter(owner=user)
+
         if search_query:
             businesses = businesses.filter(
                 models.Q(name__icontains=search_query) |
@@ -1285,7 +1322,7 @@ class BusinessToggleStatusView(View):
 
 
 # BUSINESS OFFER MANAGEMENT VIEWS
-@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+@method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
 class OfferListView(TemplateView):
     template_name = 'custom-admin/services/manage-offers.html'
 
@@ -1293,7 +1330,10 @@ class OfferListView(TemplateView):
         context = super().get_context_data(**kwargs)
         search_query = self.request.GET.get('search', '')
         page = self.request.GET.get('page', 1)
+        user = self.request.user
         offers = BusinessOffer.objects.select_related('business').all()
+        if user.is_admin and not user.is_superadmin:
+            offers = offers.filter(business__owner = user)
         if search_query:
             offers = offers.filter(
                 models.Q(title__icontains=search_query) |
@@ -1303,7 +1343,10 @@ class OfferListView(TemplateView):
         offers = offers.order_by('-created_at')
         paginator = Paginator(offers, 25)
         context['offers'] = paginator.get_page(page)
-        context['businesses'] = Business.objects.filter(is_active=True)
+        if user.is_admin and not user.is_superadmin:
+            context['businesses'] = Business.objects.filter(is_active=True, owner=user)
+        else:
+            context['businesses'] = Business.objects.filter(is_active=True)
         context['search_query'] = search_query
         context['title'] = 'Business Offers Management'
         return context
@@ -1411,7 +1454,7 @@ class OfferToggleStatusView(View):
     
 
 
-@method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
 class ManageAPISettingsView(TemplateView):
     template_name = 'custom-admin/services/manage-api.html'
 
@@ -1462,7 +1505,7 @@ class ManageAPISettingsView(TemplateView):
         
 #         return redirect('admin_panel:manage_api_settings')
 
-@method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
 class UpdateStripeSettingsView(View):
     def post(self, request, stripe_id):
         try:
@@ -1481,7 +1524,7 @@ class UpdateStripeSettingsView(View):
         
         return redirect('admin_panel:manage_api_settings')
 
-@method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
 class UpdateGoogleMapsSettingsView(View):
     def post(self, request, maps_id):
         try:
@@ -1536,10 +1579,6 @@ class UpdateFirebaseSettingsView(View):
 #             messages.error(request, f'Error toggling ChatGPT status: {str(e)}')
         
 #         return redirect('admin_panel:manage_api_settings')
-
-import datetime
-from django.utils import timezone
-
 
 def _parse_dt(value):
     if not value:

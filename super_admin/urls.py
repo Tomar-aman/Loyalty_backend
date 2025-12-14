@@ -32,6 +32,7 @@ urlpatterns = [
     path('admins/add/', views.AdminAddView.as_view(), name='admin_add'),
     path('admins/<int:admin_id>/edit/', views.AdminEditView.as_view(), name='admin_edit'),
     path('admins/<int:admin_id>/delete/', views.AdminDeleteView.as_view(), name='admin_delete'),
+    path('admins/<int:admin_id>/reset-password/', views.AdminPasswordReset.as_view(), name='admin_reset_password'),
     path('admins/<int:admin_id>/toggle/', views.AdminToggleStatusView.as_view(), name='admin_toggle'),
 
     # Cities management

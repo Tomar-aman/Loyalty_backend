@@ -442,7 +442,7 @@ $(document).ready(function() {
     // Reset password modal
     $('.reset-password').click(function() {
         var adminId = $(this).data('admin-id');
-        $('#resetAdminPasswordForm').attr('action', `{% url 'admin_panel:admin_toggle' 0 %}`.replace('0', adminId));
+        $('#resetAdminPasswordForm').attr('action', `{% url 'admin_panel:admin_reset_password' 0 %}`.replace('0', adminId));
     });
 
     // Update admin counts

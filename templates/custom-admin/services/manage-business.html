@@ -111,7 +111,7 @@
               <input type="text" name="name" class="customInput"
                      placeholder="Enter Business Name" required>
             </div>
-
+            {% if request.user.is_superadmin %}
             <div class="col-md-12">
               <label class="inputLabel">Owner (Admin)</label>
               <select name="owner" class="customInput" required>
@@ -121,6 +121,9 @@
                 {% endfor %}
               </select>
             </div>
+            {% else %}
+            <input type="hidden" name="owner" value="{{ request.user.id }}">
+            {% endif %}
 
             <div class="col-md-12">
               <label class="inputLabel">Category</label>
@@ -243,7 +246,7 @@
               <input type="text" id="edit_name" name="name"
                      class="customInput" required>
             </div>
-
+            {% if request.user.is_superadmin %}
             <div class="col-md-12">
               <label class="inputLabel">Owner (Admin)</label>
               <select id="edit_owner" name="owner" class="customInput" required>
@@ -253,6 +256,9 @@
                 {% endfor %}
               </select>
             </div>
+            {% else %}
+            <input type="hidden" id="edit_owner" name="owner" value="{{ request.user.id }}">
+            {% endif %}
 
             <div class="col-md-12">
               <label class="inputLabel">Category</label>
