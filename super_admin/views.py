@@ -17,7 +17,7 @@ from django.db.models import Q
 from settings.models import SMTPSettings, StipeKeySettings, GoogleMapsSettings, FirebaseSettings
 from django.core.paginator import Paginator
 from django.db import models
-from card.models import Card, CardBenefit
+from card.models import Card, CardBenefit , UserCard
 from django.http import JsonResponse
 import json
 from news.models import NewsArticle
@@ -1536,3 +1536,118 @@ class UpdateFirebaseSettingsView(View):
 #             messages.error(request, f'Error toggling ChatGPT status: {str(e)}')
         
 #         return redirect('admin_panel:manage_api_settings')
+
+import datetime
+from django.utils import timezone
+
+
+def _parse_dt(value):
+    if not value:
+        return None
+    dt = datetime.datetime.fromisoformat(value)
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt, timezone.get_current_timezone())
+    return dt
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class UserCardAdminListView(TemplateView):
+    template_name = 'custom-admin/services/manage-user-card.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        search = self.request.GET.get('search', '').strip()
+
+        user_cards = UserCard.objects.select_related('user', 'card').order_by('-start_at')
+        if search:
+            user_cards = user_cards.filter(
+                Q(user__email__icontains=search) |
+                Q(user__first_name__icontains=search) |
+                Q(user__last_name__icontains=search) |
+                Q(card__name__icontains=search)
+            )
+
+        paginator = Paginator(user_cards, 25)
+        page_obj = paginator.get_page(self.request.GET.get('page', 1))
+
+        context.update({
+            'title': 'Manage User Cards',
+            'user_cards': page_obj,
+            'search_query': search,
+            'users': User.objects.filter(is_admin=False, is_superadmin=False, is_active=True, is_temp=False).order_by('email'),
+            'cards': Card.objects.filter(is_active=True).order_by('name'),
+        })
+        return context
+
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class UserCardAdminAddView(View):
+    def post(self, request):
+        try:
+            user = get_object_or_404(User, pk=request.POST.get('user'), is_admin=False, is_superadmin=False)
+            card = get_object_or_404(Card, pk=request.POST.get('card'))
+            start_at = _parse_dt(request.POST.get('start_at')) or timezone.now()
+            end_at = _parse_dt(request.POST.get('end_at'))
+            if not end_at:
+                messages.error(request, 'End date/time is required.')
+                return redirect('admin_panel:manage_user_cards')
+
+            user_card = UserCard.objects.create(
+                user=user,
+                card=card,
+                start_at=start_at,
+                end_at=end_at,
+                is_active=request.POST.get('is_active', 'true') == 'true',
+            )
+            messages.success(request, f'User card created for {user.email} -> {card.name}.')
+        except Exception as e:
+            messages.error(request, f'Error creating user card: {str(e)}')
+        return redirect('admin_panel:manage_user_cards')
+
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class UserCardAdminEditView(View):
+    def post(self, request, user_card_id):
+        try:
+            user_card = get_object_or_404(UserCard, pk=user_card_id)
+            user_card.user = get_object_or_404(User, pk=request.POST.get('user'), is_admin=False, is_superadmin=False)
+            user_card.card = get_object_or_404(Card, pk=request.POST.get('card'))
+
+            start_at = _parse_dt(request.POST.get('start_at'))
+            end_at = _parse_dt(request.POST.get('end_at'))
+            if start_at:
+                user_card.start_at = start_at
+            if end_at:
+                user_card.end_at = end_at
+
+            user_card.is_active = request.POST.get('is_active', 'true') == 'true'
+            user_card.save()
+            messages.success(request, 'User card updated successfully.')
+        except Exception as e:
+            messages.error(request, f'Error updating user card: {str(e)}')
+        return redirect('admin_panel:manage_user_cards')
+
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class UserCardAdminDeleteView(View):
+    def post(self, request, user_card_id):
+        try:
+            user_card = get_object_or_404(UserCard, pk=user_card_id)
+            user_card.delete()
+            messages.success(request, 'User card deleted successfully.')
+        except Exception as e:
+            messages.error(request, f'Error deleting user card: {str(e)}')
+        return redirect('admin_panel:manage_user_cards')
+
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class UserCardAdminToggleStatusView(View):
+    def post(self, request, user_card_id):
+        try:
+            user_card = get_object_or_404(UserCard, pk=user_card_id)
+            user_card.is_active = not user_card.is_active
+            user_card.save()
+            status = 'activated' if user_card.is_active else 'deactivated'
+            messages.success(request, f'User card {status}.')
+        except Exception as e:
+            messages.error(request, f'Error toggling status: {str(e)}')
+        return redirect('admin_panel:manage_user_cards')

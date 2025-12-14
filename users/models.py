@@ -123,6 +123,14 @@ class User(AbstractUser):
         help_text=_('Stripe customer id')
     )
 
+    device_token = models.CharField(
+        _('device token'),
+        max_length=512,
+        null=True,
+        blank=True,
+        help_text=_('Device token for push notifications')
+    )
+
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']

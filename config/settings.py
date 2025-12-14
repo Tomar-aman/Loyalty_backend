@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'business',
     'super_admin',
     'contact_us',
+    'notification',
 
 ]
 

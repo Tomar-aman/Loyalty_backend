@@ -99,6 +99,7 @@ class SignupSerializer(serializers.ModelSerializer):
 class OTPVerificationSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
     otp_code = serializers.CharField(max_length=6)
+    device_token = serializers.CharField(required=False, allow_blank=True)
 
     def validate(self, attrs):
         user = self._get_user(attrs)
@@ -130,7 +131,10 @@ class OTPVerificationSerializer(serializers.Serializer):
 
     def save(self, **kwargs):
         user = self.validated_data['user']
+        device_token = self.validated_data.get('device_token')
         user.is_active = True
+        if device_token:
+            user.device_token = device_token
         user.save()
         OTP.objects.filter(user=user).delete()  # Clean up
         return user

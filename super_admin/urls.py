@@ -73,4 +73,11 @@ urlpatterns = [
     path('offers/<int:offer_id>/edit/', views.OfferEditView.as_view(), name='offer_edit'),
     path('offers/<int:offer_id>/delete/', views.OfferDeleteView.as_view(), name='offer_delete'),
     path('offers/<int:offer_id>/toggle/', views.OfferToggleStatusView.as_view(), name='offer_toggle'),
+
+    # User Card Management
+    path('user-cards/', views.UserCardAdminListView.as_view(), name='manage_user_cards'),
+    path('user-cards/add/', views.UserCardAdminAddView.as_view(), name='user_card_add'),
+    path('user-cards/<int:user_card_id>/edit/', views.UserCardAdminEditView.as_view(), name='user_card_edit'),
+    path('user-cards/<int:user_card_id>/delete/', views.UserCardAdminDeleteView.as_view(), name='user_card_delete'),
+    path('user-cards/<int:user_card_id>/toggle/', views.UserCardAdminToggleStatusView.as_view(), name='user_card_toggle'),
 ]
