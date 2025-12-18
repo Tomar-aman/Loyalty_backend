@@ -105,6 +105,7 @@ class RedeemedOfferAPIView(GenericAPIView):
         try:
             serializer = self.get_serializer(data=request.data, context ={'request': request})
             serializer.is_valid(raise_exception=True)  
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

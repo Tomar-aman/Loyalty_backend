@@ -81,4 +81,14 @@ class RedeemedOfferSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RedeemedOffer
-        fields = ['id', 'offer' ,'redeemed_at', 'is_used']
+        fields = ['id','offer' ,'redeemed_at', 'is_used']
+  
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        offer = validated_data['offer']
+        redeemed_offer = RedeemedOffer.objects.create(
+            user=user,
+            offer=offer
+        )
+        return redeemed_offer
