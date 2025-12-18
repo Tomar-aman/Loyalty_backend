@@ -223,3 +223,35 @@ class BusinessOffer(models.Model):
     class Meta:
         verbose_name = _("Business Offer")
         verbose_name_plural = _("Business Offers")
+
+
+class RedeemedOffer(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='redeemed_offers',
+        verbose_name=_("User"),
+    )
+    offer = models.ForeignKey(
+        BusinessOffer,
+        on_delete=models.CASCADE,
+        related_name='redeemed_by',
+        verbose_name=_("Offer"),
+    )
+    redeemed_at = models.DateTimeField(
+        _("Redeemed At"),
+        auto_now_add=True,
+    )
+
+    is_used = models.BooleanField(
+        _("Is Used"),
+        default=True,
+    )
+
+    def __str__(self):
+        return f"{self.user.username} redeemed {self.offer.title}"
+
+    class Meta:
+        verbose_name = _("Redeemed Offer")
+        verbose_name_plural = _("Redeemed Offers")
+        unique_together = ('user', 'offer')

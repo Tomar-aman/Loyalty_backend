@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import BusinessCategory, Business, BusinessImage, BusinessOffer
+from .models import BusinessCategory, Business, BusinessImage, BusinessOffer, RedeemedOffer
 from users.models import User
 
 class BusinessCategorySerializer(serializers.ModelSerializer):
@@ -76,3 +76,9 @@ class PopularOfferSerializer(serializers.ModelSerializer):
             "is_popular",
             "business",
         ]
+
+class RedeemedOfferSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = RedeemedOffer
+        fields = ['id', 'offer' ,'redeemed_at', 'is_used']

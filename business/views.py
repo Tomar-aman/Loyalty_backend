@@ -8,13 +8,14 @@ from rest_framework import status
 
 from business.models import (
     BusinessCategory,
-    Business, BusinessOffer
+    Business, BusinessOffer, RedeemedOffer
 )
 from business.serializers import (
     BusinessCategorySerializer,
     BusinessSerializer,
     BusinessDetailSerializer,
-    PopularOfferSerializer
+    PopularOfferSerializer,
+    RedeemedOfferSerializer
 )
 from django.utils import timezone
 
@@ -93,3 +94,17 @@ class PopularDealsAPIView(ListAPIView):
             )
             .order_by("-created_at")
         )
+
+class RedeemedOfferAPIView(GenericAPIView):
+    """
+    Returns all redeemed offers for the authenticated user.
+    """
+    serializer_class = RedeemedOfferSerializer
+
+    def post(self, request, *args, **kwargs):
+        try:
+            serializer = self.get_serializer(data=request.data, context ={'request': request})
+            serializer.is_valid(raise_exception=True)  
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

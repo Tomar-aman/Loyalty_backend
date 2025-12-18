@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Business, BusinessCategory, BusinessImage, BusinessOffer
+from .models import Business, BusinessCategory, BusinessImage, BusinessOffer, RedeemedOffer
 
 @admin.register(BusinessCategory)
 class BusinessCategoryAdmin(admin.ModelAdmin):
@@ -25,3 +25,9 @@ class BusinessAdmin(admin.ModelAdmin):
     search_fields = ('name', 'owner__username', 'category__name')
     list_filter = ('is_active', 'is_featured', 'category')
     inlines = [BusinessImageInline]
+
+@admin.register(RedeemedOffer)
+class RedeemedOfferAdmin(admin.ModelAdmin):
+    list_display = ('user', 'offer', 'redeemed_at', 'is_used')
+    # search_fields = ('user__username', 'offer__title')
+    list_filter = ('is_used', 'redeemed_at')
