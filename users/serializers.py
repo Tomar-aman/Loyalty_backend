@@ -248,6 +248,7 @@ class UserDetailsSerializer(serializers.ModelSerializer):
 
 class GoogleAuthSerializer(serializers.Serializer):
     token = serializers.CharField()
+    device_token = serializers.CharField(required=False, allow_blank=True)
 
     def validate(self, attrs):
         token = attrs.get('token')
@@ -298,6 +299,8 @@ class GoogleAuthSerializer(serializers.Serializer):
                 user.google_id = google_id
                 user.save()
             
+            user.device_token = attrs.get('device_token', '') or user.device_token
+            user.save()
             attrs["user"] = user
             attrs["is_new_user"] = created  
             return attrs

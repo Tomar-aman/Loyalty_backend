@@ -82,7 +82,26 @@ class RedeemedOfferSerializer(serializers.ModelSerializer):
     class Meta:
         model = RedeemedOffer
         fields = ['id','offer' ,'redeemed_at', 'is_used']
-  
+    
+    def validate(self, attrs):
+        user = self.context['request'].user
+        offer = attrs.get('offer')
+
+        # Check if the offer is active
+        if not offer.is_active:
+            raise serializers.ValidationError("This offer is not active.")
+
+        # Check if the offer is within the valid date range
+        from django.utils import timezone
+        now = timezone.now()
+        if not (offer.start_date <= now <= offer.end_date):
+            raise serializers.ValidationError("This offer is not valid at this time.")
+
+        # Check if the user has already redeemed this offer
+        if RedeemedOffer.objects.filter(user=user, offer=offer).exists():
+            raise serializers.ValidationError("You have already redeemed this offer.")
+
+        return attrs
 
     def create(self, validated_data):
         user = self.context['request'].user
