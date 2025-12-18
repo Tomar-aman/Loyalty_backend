@@ -42,12 +42,17 @@ class BusinessListView(GenericAPIView):
         category = self.request.GET.get('category')
         search = self.request.GET.get('search')
         is_featured = self.request.GET.get('is_featured')
+        sort = self.request.GET.get('sort')
         if is_featured:
             qs = qs.filter(is_featured=is_featured)
         if category:
             qs = qs.filter(category_id=category)
         if search:
             qs = qs.filter(name__icontains=search)
+        if sort == 'asc':
+            qs = qs.order_by('name')
+        elif sort == 'desc':
+            qs = qs.order_by('-name')
         return qs
     
     def get(self, request, *args, **kwargs):
