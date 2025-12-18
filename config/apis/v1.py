@@ -9,4 +9,5 @@ urlpatterns = [
     path("card/", include("card.urls")),
     path("business/", include("business.urls")),
     path("contact/", include("contact_us.urls")),
+    path("notification/", include("notification.urls")),
 ]
