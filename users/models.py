@@ -72,6 +72,11 @@ class User(AbstractUser):
         null=True,
         blank=True
     )
+    dob = models.DateField(
+        _('date of birth'),
+        null=True,
+        blank=True
+    )
     city = models.ForeignKey(
         'users.City',
         on_delete=models.SET_NULL,

@@ -174,6 +174,7 @@ class CompleteSignUpSerializer(serializers.Serializer):
     phone_number = serializers.CharField(required=False, allow_blank=True)
     profile_picture = serializers.ImageField(required=False, allow_null=True)
     customer_id = serializers.CharField(required=False, allow_blank=True)
+    dob = serializers.DateField(required=False, allow_null=True)
     city = serializers.PrimaryKeyRelatedField(queryset=City.objects.all(), required=False, allow_null=True)
 
     def validate(self, attrs):
@@ -212,7 +213,7 @@ class UserDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'first_name', 'last_name', 'email', 'phone_number','profile_picture','customer_id',
+            'id', 'first_name', 'last_name', 'email', 'phone_number','profile_picture','customer_id','dob',
             'country',
             'city',
             'city_name',
