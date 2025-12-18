@@ -110,3 +110,11 @@ class RedeemedOfferAPIView(GenericAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            redeemed_offers = RedeemedOffer.objects.filter(user=request.user).select_related('offer', 'offer__business')
+            serializer = self.get_serializer(redeemed_offers, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
