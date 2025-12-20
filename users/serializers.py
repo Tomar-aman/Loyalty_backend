@@ -6,8 +6,7 @@ from datetime import timedelta
 from config.utils import send_mail
 import requests
 from django.core.files.base import ContentFile
-# from firebase_admin import auth
-# from config.utils import initialize_firebase
+from card.serializers import UserCardSerializer
 
 class CountrySerializer(serializers.ModelSerializer):
     class Meta:
@@ -201,7 +200,6 @@ class UserDetailsSerializer(serializers.ModelSerializer):
     city = CitySerializer(read_only=True)
     country = CountrySerializer(read_only=True)
 
-    # write-only PK fields for updates
     city_id = serializers.PrimaryKeyRelatedField(
         queryset=City.objects.all(), source='city', write_only=True, required=False, allow_null=True
     )
@@ -210,6 +208,7 @@ class UserDetailsSerializer(serializers.ModelSerializer):
     )
     city_name = serializers.CharField(write_only=True, required=False)
     country_name = serializers.CharField(write_only=True, required=False)
+    card = serializers.SerializerMethodField()
     class Meta:
         model = User
         fields = [
@@ -218,7 +217,7 @@ class UserDetailsSerializer(serializers.ModelSerializer):
             'city',
             'city_name',
             'country_name',
-            'country_code','is_active','is_temp', 'country_id', 'city_id'
+            'country_code','is_active','is_temp', 'country_id', 'city_id' , 'card'
         ]
     
     def update(self, instance, validated_data):
@@ -243,6 +242,15 @@ class UserDetailsSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+    
+    def get_card(self, obj):
+        card = (
+            obj.user_cards
+            .filter(is_active=True)
+            .select_related("card")
+            .first()
+        )
+        return UserCardSerializer(card).data if card else None
     
         
 

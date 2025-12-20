@@ -78,10 +78,11 @@ class PopularOfferSerializer(serializers.ModelSerializer):
         ]
 
 class RedeemedOfferSerializer(serializers.ModelSerializer):
+    business = BusinessSerializer(source='offer.business', read_only=True)
 
     class Meta:
         model = RedeemedOffer
-        fields = ['id','offer' ,'redeemed_at', 'is_used']
+        fields = ['id','offer' ,'redeemed_at', 'is_used', 'business']
     
     def validate(self, attrs):
         user = self.context['request'].user

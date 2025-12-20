@@ -26,7 +26,7 @@ class User(AbstractUser):
     )
     country_code = models.CharField(
         _('country code'),
-        max_length=5,
+        max_length=10,
         null=True,
         blank=True,
     )

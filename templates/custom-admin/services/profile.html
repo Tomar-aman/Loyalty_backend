@@ -95,51 +95,7 @@
                 </div>
             </div>
              <!-- SMTP Settings Section -->
-            <h4 class="H2Heading mt-4">SMTP Settings</h4>
-             <div class="lightCard mt-4">
-                <form method="post" action="{% url 'admin_panel:update_smtp' %}">
-                    {% csrf_token %}
-                    <div class="row row-gap-4">
-                        <div class="col-md-6">
-                            <label class="inputLabel">SMTP Host</label>
-                            <input type="text" name="smtp_host" class="customInput" value="{{ smtp_settings.host }}" placeholder="Enter SMTP Host" required>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="inputLabel">SMTP Port</label>
-                            <input type="number" name="smtp_port" class="customInput" value="{{ smtp_settings.port }}" placeholder="Enter SMTP Port" required>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="inputLabel">SMTP Username</label>
-                            <input type="text" name="smtp_username" class="customInput" value="{{ smtp_settings.username }}" placeholder="Enter SMTP Username" required>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="inputLabel">SMTP Password</label>
-                            <input type="password" name="smtp_password" class="customInput" value="{{ smtp_settings.password }}" placeholder="Enter SMTP Password" required>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="inputLabel">From Email</label>
-                            <input type="email" name="from_email" class="customInput" value="{{ smtp_settings.from_email }}" placeholder="Enter From Email" required>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center mt-4">
-                                <input type="checkbox" name="use_tls" id="use_tls" class="form-check-input me-2" {% if smtp_settings.use_tls %}checked{% endif %}>
-                                <label class="inputLabel mb-0" for="use_tls">Use TLS</label>
-                            </div>
-                        </div>
-
-                        <div class="col-md-12">
-                            <div class="w-25 ms-auto">
-                                <button type="submit" class="customButton">Update SMTP Settings</button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
+            
         </div>
     </div>
 </section>

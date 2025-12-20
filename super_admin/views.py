@@ -139,10 +139,11 @@ class ManageNotificationsView(TemplateView):
             pushed_count = 0
             for u in recipients.only('id', 'device_token'):
                 Notification.objects.create(user=u, title=title, message=message)
+                unread_count = Notification.objects.filter(user=u, is_read=False).count()
                 created_count += 1
                 if u.device_token:
                     try:
-                        send_push_to_user(u.id, title, message, data={'type': 'admin_broadcast'})
+                        send_push_to_user(u.id, title, message, data={'type': 'admin_broadcast', 'unread_count': str(unread_count)})
                         pushed_count += 1
                         print("Push sent to user:", u.id)
                     except Exception:
@@ -219,7 +220,7 @@ class UpdateSMTPSettingsView(View):
         except Exception as e:
             messages.error(request, f'Error updating SMTP settings: {str(e)}')
         
-        return redirect('admin_panel:profile')
+        return redirect('admin_panel:manage_api_settings')
 
 @method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
 class ChangePasswordView(View):
@@ -1559,10 +1560,15 @@ class ManageAPISettingsView(TemplateView):
         firebase_settings = FirebaseSettings.objects.first()
         if not firebase_settings:
             firebase_settings = FirebaseSettings.objects.create()
+        
+        smtp_settings = SMTPSettings.objects.first()
+        if not smtp_settings:  
+            smtp_settings = SMTPSettings.objects.create()
 
         context.update({
             'title': 'Manage API Settings',
             # 'chatgpt_settings': chatgpt_settings,
+            'smtp_settings': smtp_settings,
             'stripe_settings': stripe_settings,
             'google_maps_settings': google_maps_settings,
             'firebase_settings': firebase_settings,

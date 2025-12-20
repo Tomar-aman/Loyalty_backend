@@ -28,13 +28,13 @@
         <div class="scrollableTable">
           <div class="tableInputFilter">
             <form method="GET" class="mb-4">
-              <div class="row g-3">
-                <div class="col-md-5">
+              {% comment %} <div class="row g-3"> {% endcomment %}
+                <div class="input-group">
                   <input type="search" class="customInput searchTable" name="search" 
                          placeholder="Search by name, email, phone" 
                          value="{{ search_query }}">
                 </div>
-                <div class="col-md-4">
+                {% comment %} <div class="col-md-4">
                   <div class="customSingleSelect">
                     <div class="select-icon">
                       <i class="fa fa-angle-down selectIcon"></i>
@@ -49,8 +49,8 @@
                 </div>
                 <div class="col-md-3">
                   <button class="customButton w-100" type="submit">Apply Filter</button>
-                </div>
-              </div>
+                </div> {% endcomment %}
+              {% comment %} </div> {% endcomment %}
             </form>
           </div>
 

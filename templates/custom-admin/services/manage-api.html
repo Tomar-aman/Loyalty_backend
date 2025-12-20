@@ -21,6 +21,45 @@
             {% endfor %}
         {% endif %}
 
+                <div class="topContent">
+                        <h2 class="H4Heading mt-4">Manage SMTP</h2>
+                </div>
+
+                <div class="scrollableTable">
+                        <div>
+                            <table cellpadding="1" cellspacing="1">
+                                <tr>
+                                    <th>Host</th>
+                                    <th>Port</th>
+                                    <th>From Email</th>
+                                    <th>Use TLS</th>
+                                    <th>Updated at</th>
+                                    <th>Actions</th>
+                                </tr>
+                                <tbody>
+                                    <tr>
+                                        <td>{{ smtp_settings.host|default:"-" }}</td>
+                                        <td>{{ smtp_settings.port|default:"-" }}</td>
+                                        <td>{{ smtp_settings.from_email|default:"-" }}</td>
+                                        <td>{% if smtp_settings and smtp_settings.use_tls %}Yes{% else %}No{% endif %}</td>
+                                        <td>{{ smtp_settings.updated_at|date:"d/m/Y" }}</td>
+                                        <td>
+                                                <button class="tableActionBtn edit-smtp" 
+                                                                data-smtp-host="{{ smtp_settings.host }}"
+                                                                data-smtp-port="{{ smtp_settings.port }}"
+                                                                data-smtp-username="{{ smtp_settings.username }}"
+                                                                data-smtp-password="{{ smtp_settings.password }}"
+                                                                data-smtp-from-email="{{ smtp_settings.from_email }}"
+                                                                data-smtp-use-tls="{{ smtp_settings.use_tls|yesno:'true,false' }}">
+                                                        <i class="fa fa-edit"></i>
+                                                </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
         {% comment %} <div class="topContent">
             <h2 class="H4Heading mt-4">Manage ChatGPT API</h2>
         </div>
@@ -169,6 +208,64 @@
               </table>
             </div>
           </div>
+
+            <!-- Edit SMTP Settings Modal -->
+            <div class="modal fade customModal addDataModal" id="editSMTPModal" tabindex="-1" aria-labelledby="editSMTPModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h6 class="H2Heading">Edit SMTP Settings</h6>
+                            <button type="button" class="hideClose_Modal" data-bs-dismiss="modal">
+                                <img src="{% static 'admin/images/close.png' %}" alt="" class="img-fluid">
+                            </button>
+                        </div>
+
+                        <div class="modal-body">
+                            <form method="post" action="{% url 'admin_panel:update_smtp' %}" id="editSMTPForm">
+                                {% csrf_token %}
+                                <div class="row row-gap-4">
+                                    <div class="col-md-6">
+                                        <label class="inputLabel">SMTP Host</label>
+                                        <input type="text" name="smtp_host" id="edit_smtp_host" class="customInput" placeholder="Enter SMTP Host" required>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="inputLabel">SMTP Port</label>
+                                        <input type="number" name="smtp_port" id="edit_smtp_port" class="customInput" placeholder="Enter SMTP Port" required>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="inputLabel">SMTP Username</label>
+                                        <input type="text" name="smtp_username" id="edit_smtp_username" class="customInput" placeholder="Enter SMTP Username" required>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="inputLabel">SMTP Password</label>
+                                        <input type="password" name="smtp_password" id="edit_smtp_password" class="customInput" placeholder="Enter SMTP Password" required>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="inputLabel">From Email</label>
+                                        <input type="email" name="from_email" id="edit_smtp_from_email" class="customInput" placeholder="Enter From Email" required>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center mt-4">
+                                            <input type="checkbox" name="use_tls" id="edit_smtp_use_tls" class="form-check-input me-2">
+                                            <label class="inputLabel mb-0" for="edit_smtp_use_tls">Use TLS</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="modalFooter">
+                                        <button type="button" class="customButton" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="customButton ms-2">Update SMTP Settings</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
       </div>
     </div>
@@ -388,6 +485,23 @@ $(document).ready(function() {
         $('#editFirebaseModal').modal('show');
     });
 
+    $('.edit-smtp').click(function() {
+        var host = $(this).data('smtp-host') || '';
+        var port = $(this).data('smtp-port') || '';
+        var username = $(this).data('smtp-username') || '';
+        var password = $(this).data('smtp-password') || '';
+        var fromEmail = $(this).data('smtp-from-email') || '';
+        var useTls = ($(this).data('smtp-use-tls') || 'true') === 'true';
+
+        $('#edit_smtp_host').val(host);
+        $('#edit_smtp_port').val(port);
+        $('#edit_smtp_username').val(username);
+        $('#edit_smtp_password').val(password);
+        $('#edit_smtp_from_email').val(fromEmail);
+        $('#edit_smtp_use_tls').prop('checked', useTls);
+
+        $('#editSMTPModal').modal('show');
+    });
 });
 
 {% comment %} function toggleChatGPTStatus(checkbox) {
