@@ -17,6 +17,8 @@ from django.db.models import Q
 from settings.models import SMTPSettings, StipeKeySettings, GoogleMapsSettings, FirebaseSettings
 from django.core.paginator import Paginator
 from django.db import models
+from notification.models import Notification
+from notification.utils import send_push_to_user
 from card.models import Card, CardBenefit , UserCard
 from django.http import JsonResponse
 import json
@@ -73,6 +75,86 @@ class CustomAdminLogoutView(View):
     def get(self, request):
         logout(request)
         return redirect('admin_panel:login')
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class ManageNotificationsView(TemplateView):
+    template_name = 'custom-admin/services/manage-notifications.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Send Notifications'
+
+        # Filters
+        search_query = self.request.GET.get('search', '').strip()
+        city_id = self.request.GET.get('city_id')
+        page = self.request.GET.get('page', 1)
+
+        users_qs = User.objects.filter(is_superadmin=False).order_by('-date_joined')
+        if city_id:
+            users_qs = users_qs.filter(city_id=city_id)
+        if search_query:
+            users_qs = users_qs.filter(
+                Q(first_name__icontains=search_query) |
+                Q(last_name__icontains=search_query) |
+                Q(email__icontains=search_query) |
+                Q(phone_number__icontains=search_query)
+            )
+
+        paginator = Paginator(users_qs, 25)
+        users_page = paginator.get_page(page)
+
+        context['cities'] = City.objects.all().order_by('name')
+        context['users_page'] = users_page
+        context['search_query'] = search_query
+        context['selected_city_id'] = city_id
+        return context
+
+    def post(self, request):
+        title = request.POST.get('title', '').strip()
+        message = request.POST.get('message', '').strip()
+        mode = request.POST.get('mode', 'selected_users')  # 'selected_users' | 'cities' | 'all'
+        city_ids = request.POST.getlist('city_ids')
+        user_ids = request.POST.getlist('user_ids')
+
+        if not title or not message:
+            messages.error(request, 'Title and message are required.')
+            return redirect('admin_panel:manage_notifications')
+
+        try:
+            # Build recipient queryset based on mode
+            if mode == 'all':
+                recipients = User.objects.filter(is_superadmin=False)
+            elif mode == 'cities':
+                if not city_ids:
+                    messages.error(request, 'Please select at least one city.')
+                    return redirect('admin_panel:manage_notifications')
+                recipients = User.objects.filter(is_superadmin=False, city_id__in=city_ids)
+            else:  # selected_users
+                if not user_ids:
+                    messages.error(request, 'Please select at least one user.')
+                    return redirect('admin_panel:manage_notifications')
+                recipients = User.objects.filter(pk__in=user_ids, is_superadmin=False)
+
+            created_count = 0
+            pushed_count = 0
+            for u in recipients.only('id', 'device_token'):
+                Notification.objects.create(user=u, title=title, message=message)
+                created_count += 1
+                if u.device_token:
+                    try:
+                        send_push_to_user(u.id, title, message, data={'type': 'admin_broadcast'})
+                        pushed_count += 1
+                        print("Push sent to user:", u.id)
+                    except Exception:
+                        print("Failed to send push to user:", u.id)
+                        # Fail silently for push but keep record
+                        pass
+
+            messages.success(request, f'Notification created for {created_count} users. Push sent to {pushed_count}.')
+        except Exception as e:
+            messages.error(request, f'Failed to send notifications: {str(e)}')
+
+        return redirect('admin_panel:manage_notifications')
   
 @method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
 class AdminProfileView(View):

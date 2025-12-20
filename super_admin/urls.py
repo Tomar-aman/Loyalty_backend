@@ -13,6 +13,9 @@ urlpatterns = [
     path('change-password/', views.ChangePasswordView.as_view(), name='change_password'),
     path('update-smtp-settings/', views.UpdateSMTPSettingsView.as_view(), name='update_smtp'),
     
+    # Notifications Management
+    path('notifications/', views.ManageNotificationsView.as_view(), name='manage_notifications'),
+    
     # API Settings Management
     path('api-settings/', views.ManageAPISettingsView.as_view(), name='manage_api_settings'),
     # path('chatgpt-settings/<int:api_id>/edit/', views.UpdateChatGPTSettingsView.as_view(), name='update_chatgpt'),

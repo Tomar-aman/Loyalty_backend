@@ -1,0 +1,283 @@
+{% extends 'custom-admin/base.html' %}
+{% load static %}
+{% block content %}
+
+<section class="manageActivitiesPage managepadding manageallpage">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="topContent">
+          <h2 class="H2Heading">Send Notifications</h2>
+          <button class="topContentButton" data-bs-toggle="modal" data-bs-target="#sendNotificationModal">
+            <i class="fa fa-paper-plane" aria-hidden="true"></i>
+            Compose Notification
+          </button>
+        </div>
+        
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{% if message.tags == "error" %}danger alert-dismissible fade show{% else %}{{message.tags}} alert-dismissible fade show{% endif %}" role="alert">
+              {{ message }}
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        <div class="scrollableTable">
+          <div class="tableInputFilter">
+            <form method="GET" class="mb-4">
+              <div class="row g-3">
+                <div class="col-md-5">
+                  <input type="search" class="customInput searchTable" name="search" 
+                         placeholder="Search by name, email, phone" 
+                         value="{{ search_query }}">
+                </div>
+                <div class="col-md-4">
+                  <div class="customSingleSelect">
+                    <div class="select-icon">
+                      <i class="fa fa-angle-down selectIcon"></i>
+                      <select name="city_id" class="icons_select2">
+                        <option value="">All Cities</option>
+                        {% for c in cities %}
+                          <option value="{{ c.id }}" {% if selected_city_id == c.id|stringformat:'s' %}selected{% endif %}>{{ c.name }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <button class="customButton w-100" type="submit">Apply Filter</button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div>
+            <table cellpadding="1" cellspacing="1">
+              <tr>
+                <th>
+                  <input type="checkbox" id="selectAll" class="form-check-input">
+                </th>
+                <th>User ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>City</th>
+                <th>Registered</th>
+              </tr>
+              <tbody>
+                {% for u in users_page %}
+                <tr>
+                  <td>
+                    <input type="checkbox" class="form-check-input user-checkbox" value="{{ u.id }}" data-name="{{ u.first_name }} {{ u.last_name }}">
+                  </td>
+                  <td>{{ u.id }}</td>
+                  <td>{{ u.first_name }} {{ u.last_name }}</td>
+                  <td>{{ u.email }}</td>
+                  <td>{{ u.phone_number|default:"-" }}</td>
+                  <td>{{ u.city.name|default:"-" }}</td>
+                  <td>{{ u.date_joined|date:"M d, Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="7" class="text-center">No users found.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+
+            <div class="tablePagination">
+              <nav aria-label="Page navigation example">
+                <ul class="pagination">
+                  {% if users_page.has_previous %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ users_page.previous_page_number }}&search={{ search_query }}&city_id={{ selected_city_id }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                      </a>
+                    </li>
+                  {% endif %}
+                  {% for num in users_page.paginator.page_range %}
+                    {% if num == users_page.number %}
+                      <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                      </li>
+                    {% else %}
+                      <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}&search={{ search_query }}&city_id={{ selected_city_id }}">{{ num }}</a>
+                      </li>
+                    {% endif %}
+                  {% endfor %}
+                  {% if users_page.has_next %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ users_page.next_page_number }}&search={{ search_query }}&city_id={{ selected_city_id }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                      </a>
+                    </li>
+                  {% endif %}
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Send Notification Modal -->
+<div class="modal fade customModal addDataModal" id="sendNotificationModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="H2Heading">Compose & Send Notification</h6>
+        <button type="button" class="hideClose_Modal" data-bs-dismiss="modal">
+          <img src="{% static 'admin/images/close.png' %}" alt="" class="img-fluid">
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <form method="post" action="{% url 'admin_panel:manage_notifications' %}" id="notificationForm">
+          {% csrf_token %}
+          <div class="row row-gap-4">
+            <div class="col-md-12">
+              <label class="inputLabel">Notification Title</label>
+              <input type="text" name="title" class="customInput" placeholder="Enter notification title" required>
+            </div>
+
+            <div class="col-md-12">
+              <label class="inputLabel">Message</label>
+              <textarea name="message" class="customInput" rows="5" placeholder="Enter your message here" required></textarea>
+            </div>
+
+            <div class="col-md-12">
+              <label class="inputLabel">Send To</label>
+              <div class="d-flex flex-column gap-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="mode" id="modeUsers" value="selected_users" checked>
+                  <label class="inputLabel" for="modeUsers">Selected Users (from table)</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="mode" id="modeCities" value="cities">
+                  <label class="inputLabel" for="modeCities">By Cities</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="mode" id="modeAll" value="all">
+                  <label class="inputLabel" for="modeAll">All Users</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-12" id="citySelectDiv" style="display: none;">
+              <label class="inputLabel">Choose Cities</label>
+              <select name="city_ids" id="cityIdsSelect" class="customInput" multiple size="8">
+                {% for c in cities %}
+                  <option value="{{ c.id }}">{{ c.name }}</option>
+                {% endfor %}
+              </select>
+              <div class="form-text text-muted mt-1"><small>Hold Ctrl (Cmd on Mac) to select multiple cities.</small></div>
+            </div>
+
+            <div class="col-md-12" id="selectedUsersDiv">
+              <label class="inputLabel">Selected Users (<span id="selectedCount">0</span>)</label>
+              <div id="selectedUsersList" class="border rounded p-2" style="min-height: 60px; max-height: 150px; overflow-y: auto; background: #f8f9fa;">
+                <small class="text-muted">No users selected. Check users from the table above.</small>
+              </div>
+            </div>
+
+            <div class="modalFooter">
+              <button type="button" class="customButton" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="customButton ms-2">Send Notification</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extrajs %}
+<script>
+  $(document).ready(function() {
+    // Select all functionality
+    $('#selectAll').change(function() {
+      $('.user-checkbox').prop('checked', this.checked);
+      updateSelectedUsers();
+    });
+
+    // Update selected users list
+    $('.user-checkbox').change(function() {
+      updateSelectedUsers();
+    });
+
+    function updateSelectedUsers() {
+      const selectedUsers = [];
+      $('.user-checkbox:checked').each(function() {
+        selectedUsers.push({
+          id: $(this).val(),
+          name: $(this).data('name')
+        });
+      });
+
+      $('#selectedCount').text(selectedUsers.length);
+      
+      if (selectedUsers.length > 0) {
+        let html = '<div class="d-flex flex-wrap gap-1">';
+        selectedUsers.forEach(function(user) {
+          html += `<span class="badge bg-primary">${user.name}</span>`;
+        });
+        html += '</div>';
+        $('#selectedUsersList').html(html);
+        
+        // Add hidden inputs for selected user IDs
+        $('#notificationForm input[name="user_ids"]').remove();
+        selectedUsers.forEach(function(user) {
+          $('#notificationForm').append(`<input type="hidden" name="user_ids" value="${user.id}">`);
+        });
+      } else {
+        $('#selectedUsersList').html('<small class="text-muted">No users selected. Check users from the table above.</small>');
+      }
+    }
+
+    // Mode selection handling
+    $('input[name="mode"]').change(function() {
+      const mode = $(this).val();
+      
+      if (mode === 'cities') {
+        $('#citySelectDiv').show();
+        $('#selectedUsersDiv').hide();
+      } else if (mode === 'selected_users') {
+        $('#citySelectDiv').hide();
+        $('#selectedUsersDiv').show();
+      } else {
+        $('#citySelectDiv').hide();
+        $('#selectedUsersDiv').hide();
+      }
+    });
+
+    // Form validation
+    $('#notificationForm').submit(function(e) {
+      const mode = $('input[name="mode"]:checked').val();
+      
+      if (mode === 'selected_users') {
+        const selectedCount = $('.user-checkbox:checked').length;
+        if (selectedCount === 0) {
+          e.preventDefault();
+          alert('Please select at least one user from the table.');
+          return false;
+        }
+      } else if (mode === 'cities') {
+        const selectedCities = $('#cityIdsSelect').val();
+        if (!selectedCities || selectedCities.length === 0) {
+          e.preventDefault();
+          alert('Please select at least one city.');
+          return false;
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}
