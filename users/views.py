@@ -6,9 +6,33 @@ from users.serializers import CitySerializer, CompleteSignUpSerializer, LogoutSe
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework import filters
+import json
 
+def bulk_import_countries(json_path: str) -> None:
+    """
+    Bulk import countries from JSON file.
+    Inserts new records and updates existing ones using `code` as unique field.
+    """
+    with open(json_path, "r", encoding="utf-8") as file:
+        data = json.load(file)
 
+    countries = [
+        Country(
+            name=item["country"],
+            code=item["code"].lower(),
+            phone_code=item.get("phone_code"),
+            flag=item.get("flag"),
+        )
+        for item in data
+        if item.get("code") and item.get("country")
+    ]
 
+    Country.objects.bulk_create(
+        countries,
+        update_conflicts=True,
+        unique_fields=["code"],
+        update_fields=["name", "phone_code", "flag"],
+    )
 class SignupView(GenericAPIView):
     permission_classes = [AllowAny]
     serializer_class = SignupSerializer
@@ -17,7 +41,7 @@ class SignupView(GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             otp = serializer.save()
-            print(otp)
+            # bulk_import_countries("new_c.json")
             return Response({"message": "User created. OTP sent to your email.", "otp": otp}, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

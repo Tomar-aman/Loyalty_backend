@@ -179,3 +179,6 @@ class BuyCardSerializer(serializers.Serializer):
             raise serializers.ValidationError("Invalid card duration.")
         return duration_map[duration]
 
+
+class CancelSubscriptionSerializer(serializers.Serializer):
+    id = serializers.IntegerField()

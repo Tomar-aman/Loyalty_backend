@@ -120,6 +120,7 @@ class UserCardHistory(BaseModel):
         ('purchase', 'Purchase'),
         ('renew', 'Renew'),
         ('auto_expire', 'Auto Expire'),
+        ('cancel', 'Cancel'),
     )
     user = models.ForeignKey(
         User, 
