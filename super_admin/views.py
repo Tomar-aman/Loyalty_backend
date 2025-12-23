@@ -536,7 +536,7 @@ class UserListView(TemplateView):
         
         search_query = self.request.GET.get('search', '')
         page = self.request.GET.get('page', 1)
-        users = User.objects.filter(is_temp=False, is_superadmin=False, is_admin=False)
+        users = User.objects.filter(is_superadmin=False, is_admin=False)
         
         if search_query:
             users = users.filter(
