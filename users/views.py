@@ -212,6 +212,34 @@ class LogoutView(GenericAPIView):
             return Response({"error": "Refresh token required."}, status=status.HTTP_400_BAD_REQUEST)
         except TokenError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+class DeleteUserView(GenericAPIView):
+    
+    def delete(self, request, *args, **kwargs):
+        try:
+            user = request.user
+            if user.phone_number:
+                user.phone_number += '_del' + str(user.id)
+            else:
+                user.phone_number = '_del' + str(user.id)  
+
+            if user.email:
+                user.email += '_deleted' + str(user.id)
+            else:
+                user.email = f'deleted_{user.id}@example.com' 
+            user.is_active = False
+            user.save()
+            
+            return Response({
+                'message': 'Account deleted successfully'
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 class CountryListView(GenericAPIView):
     """
