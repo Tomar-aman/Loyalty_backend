@@ -118,6 +118,8 @@
                   <span class="sidebarMenu">Manage News</span>
                 </a>
               </li>
+
+              <!-- Support & Help Group -->
               {% endif %}
 
               {% if request.user.is_superadmin %}
@@ -152,7 +154,7 @@
                 </a>
               </li>
               
-{% if request.user.is_superadmin %}
+            {% if request.user.is_superadmin %}
               <li class="li__menu">
                 <a href="{% url "admin_panel:manage_cities" %}" class="nav__link">
                   <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
@@ -169,6 +171,50 @@
                   <span class="sidebarMenu">Manage API's</span>
                 </a>
               </li>
+
+               <div class="accordionDropDown">
+                <div class="accordion accordion-flush" id="accordionSupport">
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingSupport">
+                      <button
+                        class="accordion-button collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseSupport"
+                        aria-expanded="false"
+                        aria-controls="collapseSupport">
+                        <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 2a10 10 0 1 0 6 18.32L22 22l-1.68-4A10 10 0 0 0 12 2zm-1 15h2v2h-2v-2zm2.07-7.75c-.9.92-1.07 1.24-1.07 2.25h-2v-.5c0-1.1.45-2.1 1.17-2.83C11.76 7.58 12 7.16 12 6.25 12 5.15 11.1 4.25 10 4.25S8 5.15 8 6.25H6c0-2.21 1.79-4 4-4s4 1.79 4 4c0 1.66-1.02 2.52-1.93 3.45z"></path>
+                        </svg>
+                        <span class="sidebarMenu">Support & Help</span>
+                      </button>
+                    </h2>
+                    <div
+                      id="collapseSupport"
+                      class="accordion-collapse collapse"
+                      aria-labelledby="headingSupport"
+                      data-bs-parent="#accordionSupport">
+                      <div class="accordion-body">
+                        <li class="li__menu">
+                          <a href="{% url 'admin_panel:manage_contact' %}" class="nav__link">
+                            <span class="sidebarMenu accordionMenu">Manage Contact</span>
+                          </a>
+                        </li>
+                        <li class="li__menu">
+                          <a href="{% url 'admin_panel:manage_faq' %}" class="nav__link">
+                            <span class="sidebarMenu accordionMenu">Manage FAQ</span>
+                          </a>
+                        </li>
+                        <li class="li__menu">
+                          <a href="{% url 'admin_panel:manage_contact_messages' %}" class="nav__link">
+                            <span class="sidebarMenu accordionMenu">Contact Messages</span>
+                          </a>
+                        </li>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {% endif %}
               {% comment %}

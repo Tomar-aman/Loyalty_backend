@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ContactUsMessage, FAQ, Support
+from .models import ContactUsMessage, FAQ, Support, SubsciberEmail, Address, SocialMediaLink, APPDownloadLink
 
 @admin.register(Support)
 class SupportAdmin(admin.ModelAdmin):
@@ -17,3 +17,22 @@ class ContactUsMessageAdmin(admin.ModelAdmin):
     list_display = ('name', 'email', 'subject', 'is_resolved', 'created_at', 'updated_at')
     search_fields = ('name', 'email', 'subject')
     list_filter = ('is_resolved',)
+
+@admin.register(SubsciberEmail)
+class SubsciberEmailAdmin(admin.ModelAdmin):
+    list_display = ('email', 'created_at', 'updated_at')
+    search_fields = ('email',)
+
+@admin.register(Address)
+class AddressAdmin(admin.ModelAdmin):
+    list_display = ('city', 'state', 'country', 'postal_code', 'created_at', 'updated_at')
+    search_fields = ('address_line_1', 'address_line_2', 'city', 'state', 'country', 'postal_code')
+
+@admin.register(SocialMediaLink)
+class SocialMediaLinkAdmin(admin.ModelAdmin):
+    list_display = ('instagram', 'facebook', 'twitter', 'created_at', 'updated_at')
+    search_fields = ('instagram', 'facebook', 'twitter')
+
+@admin.register(APPDownloadLink)
+class APPDownloadLinkAdmin(admin.ModelAdmin):
+    list_display = ('android_link', 'ios_link', 'created_at', 'updated_at')

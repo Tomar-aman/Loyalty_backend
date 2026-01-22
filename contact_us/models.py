@@ -65,3 +65,91 @@ class ContactUsMessage(BaseModel):
         verbose_name = _("Contact Us Message")
         verbose_name_plural = _("Contact Us Messages")
     
+class SubsciberEmail(BaseModel):
+    email = models.EmailField(
+        _("Email Address"),
+        max_length=254,
+        unique=True
+    )
+    class Meta:
+        verbose_name = _("Subscriber Email")
+        verbose_name_plural = _("Subscriber Emails")
+
+class Address(BaseModel):
+    address_line_1 = models.CharField(
+        _("Address Line 1"),
+        max_length=255
+    )
+    address_line_2 = models.CharField(
+        _("Address Line 2"),
+        max_length=255,
+        blank=True,
+        null=True
+    )
+    city = models.CharField(
+        _("City"),
+        max_length=100
+    )
+
+    state = models.CharField(
+        _("State/Province"),
+        max_length=100
+    )
+    postal_code = models.CharField(
+        _("Postal Code"),
+        max_length=20
+    )
+    country = models.CharField(
+        _("Country"),
+        max_length=100
+    )
+
+    class Meta:
+        verbose_name = _("Address")
+        verbose_name_plural = _("Addresses")
+
+class SocialMediaLink(BaseModel):
+    instagram = models.URLField(
+        _("Instagram URL"),
+        max_length=255,
+        blank=True,
+        null=True
+    )
+    facebook = models.URLField(
+        _("Facebook URL"),
+        max_length=255,
+        blank=True,
+        null=True
+    )
+    twitter = models.URLField(
+        _("Twitter URL"),
+        max_length=255,
+        blank=True,
+        null=True
+    )
+    linkedin = models.URLField(
+        _("LinkedIn URL"),
+        max_length=255,
+        blank=True,
+        null=True
+    )
+    class Meta:
+        verbose_name = _("Social Media Link")
+        verbose_name_plural = _("Social Media Links")
+
+class APPDownloadLink(BaseModel):
+    android_link = models.URLField(
+        _("Android App URL"),
+        max_length=255,
+        blank=True,
+        null=True
+    )
+    ios_link = models.URLField(
+        _("iOS App URL"),
+        max_length=255,
+        blank=True,
+        null=True
+    )
+    class Meta:
+        verbose_name = _("App Download Link")
+        verbose_name_plural = _("App Download Links")

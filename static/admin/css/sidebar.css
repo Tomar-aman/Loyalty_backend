@@ -3,7 +3,7 @@
 li.li__menu {
   list-style: none;
   font-weight: 600;
-  margin: 0 5px 5px ;
+  margin: 0 5px 5px;
 }
 
 .activesidemenu {
@@ -152,7 +152,7 @@ ul.ulnav__item {
 
 .nav__list {
   row-gap: 2.5rem;
-  margin-top: 1rem;
+  /* margin-top: 1rem; */
 }
 
 .nav__subtitle {
@@ -247,6 +247,7 @@ a.nav__link {
 
 .sidemenuLogo {
   /* border-bottom: 1px solid #FFFFFF; */
+  height: 120px;
   padding-bottom: 13px;
 }
 
@@ -361,7 +362,7 @@ button.drop_btn.dropdown-toggle {
 .li__menu.active .nav__link {
   color: #fff;
   height: 40px !important;
-  
+
 }
 
 /*-=================== SIDEBAR AND HEADER EXIT ======-=-======== */
@@ -373,7 +374,7 @@ button.drop_btn.dropdown-toggle {
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
-  color: #ffffff !important;
+  /* color: #ffffff !important; */
   margin-top: 8px !important;
   padding-left: 12px !important;
 }

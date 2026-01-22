@@ -1,5 +1,6 @@
+from google_crc32c import value
 from rest_framework import serializers
-from .models import ContactUsMessage, FAQ, Support
+from .models import ContactUsMessage, FAQ, Support, SubsciberEmail
 
 class SupportSerializer(serializers.ModelSerializer):
     class Meta:
@@ -15,3 +16,13 @@ class ContactUsMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactUsMessage
         fields = ['id', 'name', 'email', 'subject', 'message',]
+
+class SubscriberEmailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubsciberEmail
+        fields = ['id', 'email']
+    
+    # def validate_email(self, value):
+    #     if SubsciberEmail.objects.filter(email=value).exists():
+    #         raise serializers.ValidationError("This email is already subscribed.")
+    #     return value

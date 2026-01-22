@@ -1,11 +1,13 @@
 from rest_framework.generics import GenericAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import ContactUsMessage, FAQ, Support
-from .serializers import SupportSerializer, FAQSerializer, ContactUsMessageSerializer
+from .models import ContactUsMessage, FAQ, Support, SubsciberEmail
+from .serializers import SupportSerializer, FAQSerializer, ContactUsMessageSerializer, SubscriberEmailSerializer
+from rest_framework.permissions import AllowAny
 
 class SupportListView(GenericAPIView):
     serializer_class = SupportSerializer
+    permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
         try:
@@ -17,6 +19,7 @@ class SupportListView(GenericAPIView):
 
 class FAQListView(GenericAPIView):
     serializer_class = FAQSerializer
+    permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
         try:
@@ -27,6 +30,7 @@ class FAQListView(GenericAPIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
   
 class ContactUsMessageCreateView(GenericAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ContactUsMessageSerializer
 
     def post(self, request, *args, **kwargs):
@@ -37,3 +41,17 @@ class ContactUsMessageCreateView(GenericAPIView):
             return Response({"message": "Contact us message created successfully."}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+class SubscriberEmailCreateView(GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = SubscriberEmailSerializer
+
+    def post(self, request, *args, **kwargs):
+        try:
+            serializer = self.get_serializer(data=request.data)
+            if serializer.is_valid():   
+                serializer.save()
+                return Response({"message": "Thanks for subscribing!"}, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)  

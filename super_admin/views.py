@@ -28,6 +28,7 @@ from news.models import NewsArticle
 from django.core.files.storage import default_storage
 from business.models import Business, BusinessCategory, BusinessImage, BusinessOffer
 from users.models import User, City, Country
+from contact_us.models import Support, FAQ, ContactUsMessage, SubsciberEmail, Address, APPDownloadLink, SocialMediaLink
 from django.views.generic import TemplateView, View
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
@@ -1858,3 +1859,201 @@ class UserCardAdminToggleStatusView(View):
         except Exception as e:
             messages.error(request, f'Error toggling status: {str(e)}')
         return redirect('admin_panel:manage_user_cards')
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class ManageContactView(TemplateView):
+    template_name = 'custom-admin/services/manage-contact.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['support'] = Support.objects.first()
+        context['address'] = Address.objects.first()
+        context['social_link'] = SocialMediaLink.objects.first()
+        context['app_download'] = APPDownloadLink.objects.first()
+        context['title'] = 'Manage Contact'
+
+        return context
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class SupportUpdateView(View):
+    def post(self, request):
+        support, _ = Support.objects.get_or_create(pk=1)
+
+        support.country_code = request.POST.get('country_code', '').strip()
+        support.phone_number = request.POST.get('phone_number', '').strip()
+        support.email = request.POST.get('email', '').strip()
+        support.save()
+
+        messages.success(request, 'Contact information updated successfully')
+        return redirect('admin_panel:manage_contact')
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class AddressUpdateView(View):
+    def post(self, request):
+        address, _ = Address.objects.get_or_create(pk=1)
+
+        address.address_line_1 = request.POST.get('address_line_1', '').strip()
+        address.address_line_2 = request.POST.get('address_line_2', '').strip() or None
+        address.city = request.POST.get('city', '').strip()
+        address.state = request.POST.get('state', '').strip()
+        address.postal_code = request.POST.get('postal_code', '').strip()
+        address.country = request.POST.get('country', '').strip()
+        address.save()
+
+        messages.success(request, 'Address updated successfully')
+        return redirect('admin_panel:manage_contact')
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class SocialLinkUpdateView(View):
+    def post(self, request):
+        social, _ = SocialMediaLink.objects.get_or_create(pk=1)
+
+        social.instagram = request.POST.get('instagram') or None
+        social.facebook = request.POST.get('facebook') or None
+        social.twitter = request.POST.get('twitter') or None
+        social.linkedin = request.POST.get('linkedin') or None
+        social.save()
+
+        messages.success(request, 'Social links updated successfully')
+        return redirect('admin_panel:manage_contact')
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class AppDownloadUpdateView(View):
+    def post(self, request):
+        app, _ = APPDownloadLink.objects.get_or_create(pk=1)
+
+        app.android_link = request.POST.get('android_link') or None
+        app.ios_link = request.POST.get('ios_link') or None
+        app.save()
+
+        messages.success(request, 'App download links updated successfully')
+        return redirect('admin_panel:manage_contact')
+
+
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class FAQListView(TemplateView):
+    template_name = 'custom-admin/services/manage-faq.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        search_query = self.request.GET.get('search', '')
+        page = self.request.GET.get('page', 1)
+        faqs = FAQ.objects.all()
+        if search_query:
+            faqs = faqs.filter(Q(question__icontains=search_query) | Q(answer__icontains=search_query))
+        faqs = faqs.order_by('-created_at') if hasattr(FAQ, 'created_at') else faqs.order_by('-id')
+        paginator = Paginator(faqs, 25)
+        faqs_page = paginator.get_page(page)
+
+        context['faqs'] = faqs_page
+        context['search_query'] = search_query
+        context['title'] = 'Manage FAQ'
+        return context
+
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class FAQAddView(View):
+    def post(self, request):
+        try:
+            FAQ.objects.create(
+                question=request.POST.get('question') or '',
+                answer=request.POST.get('answer') or '',
+                is_active=True
+            )
+            messages.success(request, 'FAQ added successfully')
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+        return redirect('admin_panel:manage_faq')
+
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class FAQEditView(View):
+    def post(self, request, faq_id):
+        try:
+            faq = FAQ.objects.get(pk=faq_id)
+            faq.question = request.POST.get('question') or ''
+            faq.answer = request.POST.get('answer') or ''
+            faq.is_active = (request.POST.get('is_active') == 'true') if request.POST.get('is_active') is not None else faq.is_active
+            faq.save()
+            messages.success(request, 'FAQ updated successfully')
+        except FAQ.DoesNotExist:
+            messages.error(request, 'FAQ not found')
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+        return redirect('admin_panel:manage_faq')
+
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class FAQToggleStatusView(View):
+    def post(self, request, faq_id):
+        try:
+            faq = FAQ.objects.get(pk=faq_id)
+            faq.is_active = not faq.is_active
+            faq.save()
+            messages.success(request, 'FAQ status updated')
+        except FAQ.DoesNotExist:
+            messages.error(request, 'FAQ not found')
+        return redirect('admin_panel:manage_faq')
+
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class FAQDeleteView(View):
+    def post(self, request, faq_id):
+        try:
+            FAQ.objects.get(pk=faq_id).delete()
+            messages.success(request, 'FAQ deleted successfully')
+        except FAQ.DoesNotExist:
+            messages.error(request, 'FAQ not found')
+        return redirect('admin_panel:manage_faq')
+
+
+@method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
+class ContactMessageListView(TemplateView):
+    template_name = 'custom-admin/services/manage-contact-messages.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        search_query = self.request.GET.get('search', '')
+        page = self.request.GET.get('page', 1)
+        msgs = ContactUsMessage.objects.all()
+        if search_query:
+            msgs = msgs.filter(
+                Q(name__icontains=search_query) |
+                Q(email__icontains=search_query) |
+                Q(subject__icontains=search_query) |
+                Q(message__icontains=search_query)
+            )
+        msgs = msgs.order_by('-created_at') if hasattr(ContactUsMessage, 'created_at') else msgs.order_by('-id')
+        paginator = Paginator(msgs, 25)
+        msgs_page = paginator.get_page(page)
+
+        context['messages_page'] = msgs_page
+        context['search_query'] = search_query
+        context['title'] = 'Manage Contact Messages'
+        return context
+
+
+@method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
+class ContactMessageToggleResolveView(View):
+    def post(self, request, message_id):
+        try:
+            msg = ContactUsMessage.objects.get(pk=message_id)
+            msg.is_resolved = not msg.is_resolved
+            msg.save()
+            messages.success(request, 'Message status updated')
+        except ContactUsMessage.DoesNotExist:
+            messages.error(request, 'Message not found')
+        return redirect('admin_panel:manage_contact_messages')
+
+
+@method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
+class ContactMessageDeleteView(View):
+    def post(self, request, message_id):
+        try:
+            ContactUsMessage.objects.get(pk=message_id).delete()
+            messages.success(request, 'Message deleted successfully')
+        except ContactUsMessage.DoesNotExist:
+            messages.error(request, 'Message not found')
+        return redirect('admin_panel:manage_contact_messages')

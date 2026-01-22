@@ -1,0 +1,322 @@
+{% extends 'custom-admin/base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="manageActivitiesPage managepadding manageallpage">
+  <div class="container-fluid">
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show">
+          {{ message }}
+          <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- ================= CONTACT ================= -->
+    <div class="topContent">
+      <h2 class="H4Heading mt-4">Manage Contact</h2>
+    </div>
+
+    <div class="scrollableTable">
+      <table cellpadding="1" cellspacing="1">
+        <tr>
+          <th>Country Code</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>Actions</th>
+        </tr>
+        <tbody>
+          {% if support %}
+          <tr>
+            <td>{{ support.country_code }}</td>
+            <td>{{ support.phone_number }}</td>
+            <td>{{ support.email }}</td>
+            <td>
+              <button class="tableActionBtn edit-support"
+                      data-country="{{ support.country_code }}"
+                      data-phone="{{ support.phone_number }}"
+                      data-email="{{ support.email }}">
+                <i class="fa fa-edit"></i>
+              </button>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" class="text-center">No contact configured</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ================= ADDRESS ================= -->
+    <div class="topContent">
+      <h2 class="H4Heading mt-4">Manage Address</h2>
+    </div>
+
+    <div class="scrollableTable">
+      <table cellpadding="1" cellspacing="1">
+        <tr>
+          <th>Address</th>
+          <th>City</th>
+          <th>State</th>
+          <th>Country</th>
+          <th>Actions</th>
+        </tr>
+        <tbody>
+          {% if address %}
+          <tr>
+            <td>{{ address.address_line_1 }}</td>
+            <td>{{ address.city }}</td>
+            <td>{{ address.state }}</td>
+            <td>{{ address.country }}</td>
+            <td>
+              <button class="tableActionBtn edit-address"
+                      data-line1="{{ address.address_line_1 }}"
+                      data-line2="{{ address.address_line_2 }}"
+                      data-city="{{ address.city }}"
+                      data-state="{{ address.state }}"
+                      data-postal="{{ address.postal_code }}"
+                      data-country="{{ address.country }}">
+                <i class="fa fa-edit"></i>
+              </button>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="text-center">No address configured</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ================= SOCIAL ================= -->
+    <div class="topContent">
+      <h2 class="H4Heading mt-4">Manage Social Links</h2>
+    </div>
+
+    <div class="scrollableTable">
+      <table cellpadding="1" cellspacing="1">
+        <tr>
+          <th>Instagram</th>
+          <th>Facebook</th>
+          <th>Twitter</th>
+          <th>LinkedIn</th>
+          <th>Actions</th>
+        </tr>
+        <tbody>
+          {% if social_link %}
+          <tr>
+            <td>{{ social_link.instagram|default:"-" }}</td>
+            <td>{{ social_link.facebook|default:"-" }}</td>
+            <td>{{ social_link.twitter|default:"-" }}</td>
+            <td>{{ social_link.linkedin|default:"-" }}</td>
+            <td>
+              <button class="tableActionBtn edit-social"
+                      data-instagram="{{ social_link.instagram }}"
+                      data-facebook="{{ social_link.facebook }}"
+                      data-twitter="{{ social_link.twitter }}"
+                      data-linkedin="{{ social_link.linkedin }}">
+                <i class="fa fa-edit"></i>
+              </button>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="text-center">No social links configured</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ================= APP LINKS ================= -->
+    <div class="topContent">
+      <h2 class="H4Heading mt-4">Manage App Download Links</h2>
+    </div>
+
+    <div class="scrollableTable">
+      <table cellpadding="1" cellspacing="1">
+        <tr>
+          <th>Android</th>
+          <th>iOS</th>
+          <th>Actions</th>
+        </tr>
+        <tbody>
+          {% if app_download %}
+          <tr>
+            <td>{{ app_download.android_link|default:"-" }}</td>
+            <td>{{ app_download.ios_link|default:"-" }}</td>
+            <td>
+              <button class="tableActionBtn edit-app"
+                      data-android="{{ app_download.android_link }}"
+                      data-ios="{{ app_download.ios_link }}">
+                <i class="fa fa-edit"></i>
+              </button>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="3" class="text-center">No app links configured</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================= MODALS ================= -->
+
+<!-- Contact -->
+<div class="modal fade customModal addDataModal" id="editSupportModal">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <form method="post" action="{% url 'admin_panel:support_update' %}" class="modal-content">
+      {% csrf_token %}
+      <div class="modal-header">
+        <h6 class="H2Heading">Edit Contact</h6>
+        <button type="button" class="hideClose_Modal" data-bs-dismiss="modal">
+          <img src="{% static 'admin/images/close.png' %}">
+        </button>
+      </div>
+      <div class="modal-body row row-gap-4">
+        <div class="col-md-6">
+          <label class="inputLabel">Country Code</label>
+          <input type="text" name="country_code" id="edit_support_country" class="customInput" required>
+        </div>
+        <div class="col-md-6">
+          <label class="inputLabel">Phone</label>
+          <input type="text" name="phone_number" id="edit_support_phone" class="customInput" required>
+        </div>
+        <div class="col-md-12">
+          <label class="inputLabel">Email</label>
+          <input type="email" name="email" id="edit_support_email" class="customInput" required>
+        </div>
+        <div class="modalFooter">
+          <button type="button" class="customButton" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="customButton ms-2">Update</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Address -->
+<div class="modal fade customModal addDataModal" id="editAddressModal">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <form method="post" action="{% url 'admin_panel:address_update' %}" class="modal-content">
+      {% csrf_token %}
+      <div class="modal-header">
+        <h6 class="H2Heading">Edit Address</h6>
+        <button type="button" class="hideClose_Modal" data-bs-dismiss="modal">
+          <img src="{% static 'admin/images/close.png' %}">
+        </button>
+      </div>
+      <div class="modal-body row row-gap-4">
+        <input type="text" name="address_line_1" id="edit_address_line_1" class="customInput" required>
+        <input type="text" name="address_line_2" id="edit_address_line_2" class="customInput">
+        <input type="text" name="city" id="edit_city" class="customInput" required>
+        <input type="text" name="state" id="edit_state" class="customInput" required>
+        <input type="text" name="postal_code" id="edit_postal_code" class="customInput" required>
+        <input type="text" name="country" id="edit_country" class="customInput" required>
+        <div class="modalFooter">
+          <button type="button" class="customButton" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="customButton ms-2">Update</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Social -->
+<div class="modal fade customModal addDataModal" id="editSocialModal">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <form method="post" action="{% url 'admin_panel:social_update' %}" class="modal-content">
+      {% csrf_token %}
+      <div class="modal-header">
+        <h6 class="H2Heading">Edit Social Links</h6>
+        <button type="button" class="hideClose_Modal" data-bs-dismiss="modal">
+          <img src="{% static 'admin/images/close.png' %}">
+        </button>
+      </div>
+      <div class="modal-body row row-gap-4">
+        <input type="url" name="instagram" id="edit_instagram" class="customInput">
+        <input type="url" name="facebook" id="edit_facebook" class="customInput">
+        <input type="url" name="twitter" id="edit_twitter" class="customInput">
+        <input type="url" name="linkedin" id="edit_linkedin" class="customInput">
+        <div class="modalFooter">
+          <button type="button" class="customButton" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="customButton ms-2">Update</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- App -->
+<div class="modal fade customModal addDataModal" id="editAppModal">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <form method="post" action="{% url 'admin_panel:app_update' %}" class="modal-content">
+      {% csrf_token %}
+      <div class="modal-header">
+        <h6 class="H2Heading">Edit App Links</h6>
+        <button type="button" class="hideClose_Modal" data-bs-dismiss="modal">
+          <img src="{% static 'admin/images/close.png' %}">
+        </button>
+      </div>
+      <div class="modal-body row row-gap-4">
+        <input type="url" name="android_link" id="edit_android_link" class="customInput">
+        <input type="url" name="ios_link" id="edit_ios_link" class="customInput">
+        <div class="modalFooter">
+          <button type="button" class="customButton" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="customButton ms-2">Update</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extrajs %}
+<script>
+$(function () {
+
+  $('.edit-support').click(function () {
+    $('#edit_support_country').val($(this).data('country'));
+    $('#edit_support_phone').val($(this).data('phone'));
+    $('#edit_support_email').val($(this).data('email'));
+    $('#editSupportModal').modal('show');
+  });
+
+  $('.edit-address').click(function () {
+    $('#edit_address_line_1').val($(this).data('line1'));
+    $('#edit_address_line_2').val($(this).data('line2'));
+    $('#edit_city').val($(this).data('city'));
+    $('#edit_state').val($(this).data('state'));
+    $('#edit_postal_code').val($(this).data('postal'));
+    $('#edit_country').val($(this).data('country'));
+    $('#editAddressModal').modal('show');
+  });
+
+  $('.edit-social').click(function () {
+    $('#edit_instagram').val($(this).data('instagram'));
+    $('#edit_facebook').val($(this).data('facebook'));
+    $('#edit_twitter').val($(this).data('twitter'));
+    $('#edit_linkedin').val($(this).data('linkedin'));
+    $('#editSocialModal').modal('show');
+  });
+
+  $('.edit-app').click(function () {
+    $('#edit_android_link').val($(this).data('android'));
+    $('#edit_ios_link').val($(this).data('ios'));
+    $('#editAppModal').modal('show');
+  });
+
+});
+</script>
+{% endblock %}

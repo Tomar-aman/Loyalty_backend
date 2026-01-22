@@ -84,4 +84,21 @@ urlpatterns = [
     path('user-cards/<int:user_card_id>/edit/', views.UserCardAdminEditView.as_view(), name='user_card_edit'),
     path('user-cards/<int:user_card_id>/delete/', views.UserCardAdminDeleteView.as_view(), name='user_card_delete'),
     path('user-cards/<int:user_card_id>/toggle/', views.UserCardAdminToggleStatusView.as_view(), name='user_card_toggle'),
+
+   path('contact/', views.ManageContactView.as_view(), name='manage_contact'),
+
+    path('contact/support/update/', views.SupportUpdateView.as_view(), name='support_update'),
+    path('contact/address/update/', views.AddressUpdateView.as_view(), name='address_update'),
+    path('contact/social-links/update/', views.SocialLinkUpdateView.as_view(), name='social_update'),
+    path('contact/app-download/update/', views.AppDownloadUpdateView.as_view(), name='app_update'),
+
+    path('faq/', views.FAQListView.as_view(), name='manage_faq'),
+    path('faq/add/', views.FAQAddView.as_view(), name='faq_add'),
+    path('faq/<int:faq_id>/edit/', views.FAQEditView.as_view(), name='faq_edit'),
+    path('faq/<int:faq_id>/toggle/', views.FAQToggleStatusView.as_view(), name='faq_toggle'),
+    path('faq/<int:faq_id>/delete/', views.FAQDeleteView.as_view(), name='faq_delete'),
+
+    path('contact-messages/', views.ContactMessageListView.as_view(), name='manage_contact_messages'),
+    path('contact-messages/<int:message_id>/toggle/', views.ContactMessageToggleResolveView.as_view(), name='contact_message_toggle'),
+    path('contact-messages/<int:message_id>/delete/', views.ContactMessageDeleteView.as_view(), name='contact_message_delete'),
 ]
