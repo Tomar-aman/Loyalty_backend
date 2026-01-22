@@ -19,7 +19,7 @@ from django.core.paginator import Paginator
 from django.db import models
 from notification.models import Notification
 from notification.utils import send_push_to_user
-from card.models import Card, CardBenefit , UserCard
+from card.models import Card, CardBenefit , UserCard, UserCardHistory
 from django.http import JsonResponse
 import json
 import datetime
@@ -67,8 +67,86 @@ class CustomAdminDashboardView(TemplateView):
     template_name = 'custom-admin/services/dashboard.html'
 
     def get_context_data(self, **kwargs):
+        from django.db.models import F
+        import calendar
+        from collections import defaultdict
+        from datetime import datetime
+
         context = super().get_context_data(**kwargs)
         context['title'] = 'Dashboard'
+
+        # User stats
+        try:
+            total_users = User.objects.filter(is_superadmin=False).count()
+            active_users = User.objects.filter(is_superadmin=False, is_active=True).count()
+
+            # Subscription and paid/free breakdown via UserCard
+            total_subscriptions = UserCard.objects.count()
+            paid_users = UserCard.objects.filter(is_active=True).values('user_id').distinct().count()
+            free_users = max(total_users - paid_users, 0)
+
+            context.update({
+                'total_users': total_users,
+                'active_users': active_users,
+                'total_subscriptions': total_subscriptions,
+                'paid_users': paid_users,
+                'free_users': free_users,
+            })
+        except Exception:
+            # Fail-safe defaults
+            context.update({
+                'total_users': 0,
+                'active_users': 0,
+                'total_subscriptions': 0,
+                'paid_users': 0,
+                'free_users': 0,
+            })
+
+        # Monthly revenue (current month) from UserCardHistory purchase/renew
+        try:
+            now = timezone.now()
+            year = now.year
+            month = now.month
+            days_in_month = calendar.monthrange(year, month)[1]
+
+            # Filter histories for current month
+            histories = (
+                UserCardHistory.objects
+                .filter(action__in=['purchase', 'renew'], start_at__year=year, start_at__month=month)
+                .select_related('card')
+                .annotate(amount=F('card__price'))
+            )
+
+            # Aggregate per day
+            daily_totals = defaultdict(float)
+            monthly_total = 0.0
+            for h in histories:
+                day_key = h.start_at.date()
+                amt = float(h.amount) if h.amount is not None else 0.0
+                daily_totals[day_key] += amt
+                monthly_total += amt
+
+            labels = []
+            data = []
+            for day in range(1, days_in_month + 1):
+                date_obj = datetime(year, month, day)
+                labels.append(date_obj.strftime('%d %b'))
+                data.append(round(daily_totals.get(date_obj.date(), 0.0), 2))
+
+            context.update({
+                'labels': labels,
+                'data': data,
+                'monthly_total': round(monthly_total, 2),
+                'total_revenue': f"${round(monthly_total, 2):.2f}",
+            })
+        except Exception:
+            context.update({
+                'labels': [],
+                'data': [],
+                'monthly_total': 0.0,
+                'total_revenue': "$0.00",
+            })
+
         return context
 
 class CustomAdminLogoutView(View):
@@ -384,6 +462,7 @@ class AdminAddView(View):
         password = request.POST.get('password')
         confirm_password = request.POST.get('confirm_password')
         phone_number = request.POST.get('phone_number')
+        country_code = request.POST.get('country_code')
         
         try:
             # Validation
@@ -406,6 +485,7 @@ class AdminAddView(View):
                 last_name=last_name,
                 password=password,
                 phone_number=phone_number,
+                country_code=country_code,
                 is_admin=True,  # Only create regular admins
                 is_superadmin=False,
                 is_temp=False,
@@ -444,6 +524,7 @@ class AdminEditView(View):
             admin_user.last_name = request.POST.get('last_name')
             admin_user.email = request.POST.get('email')
             admin_user.phone_number = request.POST.get('phone_number')
+            admin_user.country_code = request.POST.get('country_code')
             # Don't allow changing admin type through edit
             admin_user.is_active = request.POST.get('status') == 'true'
             admin_user.save()
@@ -1351,7 +1432,6 @@ class BusinessEditView(View):
         is_featured = request.POST.get('is_featured') == 'true'
         logo = request.FILES.get('logo')
 
-        # Basic validation
         if not name or not owner_id or not category_id:
             messages.error(request, "Name, Owner, and Category are required.")
             return redirect('admin_panel:manage_businesses')

@@ -200,7 +200,7 @@
                             <div class="customSingleSelect">
                                 <div class="select-icon">
                                     <i class="fa fa-angle-down selectIcon"></i>
-                                    <select name="country_code" id="add_country_code" class="icons_select2" single="single">
+                                    <select name="country_code" id="add_country_code" class="customInput icons_select2" single="single">
                                     </select>
                                 </div>
                             </div>
@@ -281,15 +281,10 @@
 
                         <div class="col-md-12">
                             <label class="inputLabel">Status</label>
-                            <div class="customSingleSelect">
-                                <div class="select-icon">
-                                    <i class="fa fa-angle-down selectIcon"></i>
-                                    <select name="status" id="edit_status" class="icons_select2" single="single">
-                                        <option value="true">Active</option>
-                                        <option value="false">Inactive</option>
-                                    </select>
-                                </div>
-                            </div>
+                            <select name="is_active" id="edit_status" class="customInput">
+                                <option value="true">Active</option>
+                                <option value="false">Inactive</option>
+                            </select>
                         </div>
 
                         <!-- Modal Footer -->
@@ -385,25 +380,24 @@ $(document).ready(function() {
 
     // Load country codes for both add and edit modals
     function loadCountryCodes(selectElementId) {
-        fetch('https://restcountries.com/v3.1/all?fields=name,flags,idd,cca2')
+        fetch('https://restcountries.com/v3.1/all?fields=name,idd,cca2')
             .then(response => response.json())
             .then(data => {
                 const select = document.getElementById(selectElementId);
+                console.log(selectElementId, select);
                 select.innerHTML = '<option value="">Select Country Code</option>';
                 
                 data.forEach(country => {
-                    const code = country.idd?.root + (country.idd?.suffixes ? country.idd.suffixes[0] : '');
+                    const code = (country.idd && country.idd.root ? country.idd.root : '') +
+                                 (country.idd && country.idd.suffixes && country.idd.suffixes.length ? country.idd.suffixes[0] : '');
                     if (code) {
                         const option = document.createElement('option');
-                        option.value = country.cca2;
+                        option.value = code; // store dial code like +91
                         option.text = `${country.name.common} (${code})`;
                         select.appendChild(option);
                     }
                 });
-                
-                if (typeof $ !== 'undefined' && $.fn.select2) {
-                    $(select).select2();
-                }
+                  
             })
             .catch(error => console.error('Error loading countries:', error));
     }

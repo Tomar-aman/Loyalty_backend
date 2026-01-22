@@ -374,7 +374,7 @@
 
             <div class="modalFooter">
               <button type="button" class="customButton" data-bs-dismiss="modal">Cancel</button>
-              <button type="submit" class="customButton ms-2">Update Business</button>
+              <button type="submit" class="customButton ms-2 px-2">Update Business</button>
             </div>
 
           </div>
@@ -687,8 +687,8 @@ window.unmarkImageForDeletion = function(imageId, button, imageDiv) {
         var phoneNumber = $(this).data('phone-number');
         var email = $(this).data('email');
         var website = $(this).data('website');
-        var isActive = $(this).data('is-active') ? "true" : "false";
-        var isFeatured = $(this).data('is-featured') ? "true" : "false";
+        var isActive = String($(this).data('is-active')).toLowerCase() === 'true';
+        var isFeatured = String($(this).data('is-featured')).toLowerCase() === 'true';
         var editUrl = $(this).data('edit-url');
         var galleryImages = $(this).data('gallery-images');
         var galleryIds = $(this).data('gallery-ids');
@@ -704,8 +704,10 @@ window.unmarkImageForDeletion = function(imageId, button, imageDiv) {
         $('#edit_phone_number').val(phoneNumber);
         $('#edit_email').val(email);
         $('#edit_website').val(website);
-        $('#edit_is_active').val(isActive).trigger('change.select2');
-        $('#edit_is_featured').val(isFeatured).trigger('change.select2');
+        console.log('isActive:', isActive);
+        console.log('isFeatured:', isFeatured);
+        $('#edit_is_active').val(isActive ? "true" : "false").trigger('change.select2')
+        $('#edit_is_featured').val(isFeatured ? "true" : "false").trigger('change.select2')
         $('#editBusinessForm').attr('action', editUrl);
 
         // Clear edit gallery preview
