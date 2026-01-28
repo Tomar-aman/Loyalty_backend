@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 from .models import BusinessCategory, Business, BusinessImage, BusinessOffer, RedeemedOffer
 from users.models import User
@@ -87,20 +88,27 @@ class RedeemedOfferSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         user = self.context['request'].user
         offer = attrs.get('offer')
-
-        # Check if the offer is active
-        if not offer.is_active:
-            raise serializers.ValidationError("This offer is not active.")
-
-        # Check if the offer is within the valid date range
-        from django.utils import timezone
         now = timezone.now()
-        if not (offer.start_date <= now <= offer.end_date):
-            raise serializers.ValidationError("This offer is not valid at this time.")
+        # Check if User have plan to redeem
+        if not user.user_cards.filter(is_active=True).exists():
+                raise serializers.ValidationError({
+                    "error": "You need an active plan to redeem offers."
+                })
 
-        # Check if the user has already redeemed this offer
+        if not offer.is_active:
+            raise serializers.ValidationError({
+                "error": "This offer is not active."
+            })
+
+        if not (offer.start_date <= now <= offer.end_date):
+            raise serializers.ValidationError({
+                "error": "This offer is not valid at this time."
+            })
+
         if RedeemedOffer.objects.filter(user=user, offer=offer).exists():
-            raise serializers.ValidationError("You have already redeemed this offer.")
+            raise serializers.ValidationError({
+                "error": "You have already redeemed this offer."
+            })
 
         return attrs
 
