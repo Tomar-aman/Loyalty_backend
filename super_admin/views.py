@@ -764,6 +764,12 @@ class CityEditView(View):
             city.name = name
             city.is_popular = is_popular
             if icon:
+                # delete old icon file if exists
+                try:
+                    if city.icon and default_storage.exists(city.icon.name):
+                        default_storage.delete(city.icon.name)
+                except Exception:
+                    pass
                 city.icon = icon
             city.save()
             messages.success(request, 'City updated successfully')
@@ -1564,6 +1570,7 @@ class OfferEditView(View):
             start_date = request.POST.get('start_date')
             end_date = request.POST.get('end_date')
             is_active = request.POST.get('is_active') == 'true'
+            is_popular = request.POST.get('is_popular') == 'true'
 
             # Basic validation
             if not business_id or not title or not description or not start_date or not end_date:
@@ -1580,6 +1587,7 @@ class OfferEditView(View):
             offer.start_date = start_date
             offer.end_date = end_date
             offer.is_active = is_active
+            offer.is_popular = is_popular
             offer.save()
             
             messages.success(request, f'Offer "{title}" updated successfully.')

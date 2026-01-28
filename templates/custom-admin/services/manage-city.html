@@ -8,10 +8,10 @@
       <div class="col-md-12">
         <div class="topContent">
           <h2 class="H2Heading">Manage Cities</h2>
-          {% comment %} <button class="topContentButton" data-bs-toggle="modal" data-bs-target="#addCityModal">
+          <button class="topContentButton" data-bs-toggle="modal" data-bs-target="#addCityModal">
             <i class="fa fa-plus" aria-hidden="true"></i>
             Add City
-          </button> {% endcomment %}
+          </button> 
         </div>
 
         {% if messages %}
@@ -25,15 +25,36 @@
           {% endfor %}
         {% endif %}
 
-        <div class="scrollableTable">
-          <div class="tableInputFilter">
-            <form method="GET" class="mb-4">
+        {% comment %} <div class="tableInputFilter">
+            <form method="GET">
               <div class="input-group">
                 <input type="search" class="customInput searchTable" name="search"
                        placeholder="Search by city or country" value="{{ search_query }}">
               </div>
             </form>
+          </div> {% endcomment %}
+
+          <!-- Search and Filters -->
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <form method="GET">
+              <div class="input-group">
+                <input
+                  type="text"
+                  class="form-control searchTable"
+                  name="search"
+                  value="{{ search_query }}"
+                  placeholder="Search cities..."
+                />
+                <button class="btn btn-outline-secondary" type="submit">
+                  <i class="fa fa-search"></i>
+                </button>
+              </div>
+            </form>
           </div>
+        </div>
+
+        <div class="scrollableTable">
 
           <table cellpadding="1" cellspacing="1">
             <thead>
@@ -134,7 +155,7 @@
         </button>
       </div>
       <div class="modal-body">
-        <form method="post" action="{% url 'admin_panel:city_add' %}">
+        <form method="post" action="{% url 'admin_panel:city_add' %}" enctype="multipart/form-data">
           {% csrf_token %}
           <div class="row row-gap-4">
             <div class="col-md-12">
@@ -152,10 +173,25 @@
               <input type="text" name="name" class="customInput" placeholder="Enter city name" required>
             </div>
 
-            <div class="col-md-12">
+            {% comment %} <div class="col-md-12">
             <label class="inputLabel">Icon</label>
             <input type="file" name="icon" class="customInput" accept=".svg">
-          </div>
+          </div> {% endcomment %}
+
+           <div class="col-md-12">
+              <label class="inputLabel">Category Icon/Image</label>
+              <div class="upload-area" id="uploadArea">
+                <input type="file" name="icon" id="iconInput" accept=".svg" style="display: none;">
+                <div style="text-align: center; padding: 20px; border: 2px dashed #ccc; border-radius: 8px; cursor: pointer;">
+                  <i class="fa fa-cloud-upload" style="font-size: 2rem; color: #667eea;"></i>
+                  <p class="mt-2">Drag and drop image here or click to select</p>
+                  <small class="text-muted">SVG (16x16)</small>
+                </div>
+                <div id="imagePreview" style="margin-top: 10px;">
+                  <!-- Image preview will appear here -->
+                </div>
+              </div>
+            </div>
 
 
             <div class="col-md-12">
@@ -188,7 +224,7 @@
         </button>
       </div>
       <div class="modal-body">
-        <form method="post" id="editCityForm">
+        <form method="post" id="editCityForm" enctype="multipart/form-data">
           {% csrf_token %}
           <input type="hidden" name="city_id" id="edit_city_id">
           <div class="row row-gap-4">
@@ -207,14 +243,29 @@
               <input type="text" name="name" id="edit_name" class="customInput" placeholder="Enter city name">
             </div>
 
-            <div class="col-md-12">
+            {% comment %} <div class="col-md-12">
             <label class="inputLabel">Icon</label>
             <input type="file" name="icon" class="customInput" id="edit_icon" accept=".svg">
 
             <div class="mt-2">
               <img id="city_icon_preview" src="" alt="City Icon" style="width:60px; height:60px; object-fit:contain;">
             </div>
-          </div>
+          </div> {% endcomment %}
+
+          <div class="col-md-12">
+              <label class="inputLabel">Category Icon/Image</label>
+              <div class="upload-area" id="editUploadArea">
+                <input type="file" name="icon" id="editIconInput" accept=".svg" style="display: none;">
+                <div style="text-align: center; padding: 20px; border: 2px dashed #ccc; border-radius: 8px; cursor: pointer;">
+                  <i class="fa fa-cloud-upload" style="font-size: 2rem; color: #667eea;"></i>
+                  <p class="mt-2">Drag and drop image here or click to select</p>
+                  <small class="text-muted">SVG (16x16)</small>
+                </div>
+                <div id="editImagePreview" style="margin-top: 10px;">
+                  <!-- Image preview will appear here -->
+                </div>
+              </div>
+            </div>
 
 
             <div class="col-md-12">
@@ -276,6 +327,104 @@ $(document).ready(function(){
         }, 400);
     });
 
+    // Add News modal - image upload
+    const addUploadArea = document.getElementById('uploadArea');
+    const addIconInput = document.getElementById('iconInput');
+    const addImagePreview = document.getElementById('imagePreview');
+
+    if (addUploadArea && addIconInput) {
+        addUploadArea.querySelector('div').addEventListener('click', function() {
+            addIconInput.click();
+        });
+
+        addUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.opacity = '0.5';
+        });
+
+        addUploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.opacity = '1';
+        });
+
+        addUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.opacity = '1';
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                addIconInput.files = files;
+                handleImagePreview(addIconInput, addImagePreview);
+            }
+        });
+
+        addIconInput.addEventListener('change', function() {
+            handleImagePreview(this, addImagePreview);
+        });
+    }
+
+    // Edit News modal - image upload
+    const editUploadArea = document.getElementById('editUploadArea');
+    const editIconInput = document.getElementById('editIconInput');
+    const editImagePreview = document.getElementById('editImagePreview');
+
+    if (editUploadArea && editIconInput) {
+        editUploadArea.querySelector('div').addEventListener('click', function() {
+            editIconInput.click();
+        });
+
+        editUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.opacity = '0.5';
+        });
+
+        editUploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.opacity = '1';
+        });
+
+        editUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.opacity = '1';
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                editIconInput.files = files;
+                handleImagePreview(editIconInput, editImagePreview);
+            }
+        });
+
+        editIconInput.addEventListener('change', function() {
+            handleImagePreview(this, editImagePreview);
+        });
+    }
+
+    // Handle image preview
+    function handleImagePreview(inputElement, previewContainer) {
+        const file = inputElement.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewContainer.innerHTML = `
+                    <div style="position: relative; display: inline-block;">
+                        <img src="${e.target.result}" alt="Preview" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;">
+                        <button type="button" class="btn btn-sm btn-danger" style="position: absolute; top: 5px; right: 5px;" onclick="clearImage(this)">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                `;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    window.clearImage = function(btn) {
+        const previewContainer = btn.closest('#imagePreview') || btn.closest('#editImagePreview');
+        previewContainer.innerHTML = '';
+        const input = previewContainer.parentElement.querySelector('input[type="file"]');
+        if (input) {
+            input.value = '';
+        }
+    };
+
     // open edit modal and populate
     $('.edit-city').click(function(){
         var id = $(this).data('city-id');
@@ -289,6 +438,19 @@ $(document).ready(function(){
         $('#edit_country').val(countryId);
         $('#edit_is_popular').val(isPopular ? 'true' : 'false');
         $('#city_icon_preview').attr('src', iconUrl);
+
+        // Show current image
+        if (iconUrl) {
+            const previewHTML = `
+                <div style="text-align: center;">
+                    <p class="text-muted mb-2">Current Image:</p>
+                    <img src="${iconUrl}" alt="Current" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;">
+                </div>
+            `;
+            document.getElementById('editImagePreview').innerHTML = previewHTML;
+        } else {
+            document.getElementById('editImagePreview').innerHTML = '';
+        }
 
         var editUrl = $(this).data('edit-url');
         $('#editCityForm').attr('action', editUrl);
