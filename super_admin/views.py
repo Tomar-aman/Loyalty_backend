@@ -28,7 +28,7 @@ from news.models import NewsArticle
 from django.core.files.storage import default_storage
 from business.models import Business, BusinessCategory, BusinessImage, BusinessOffer
 from users.models import User, City, Country
-from contact_us.models import Support, FAQ, ContactUsMessage, SubsciberEmail, Address, APPDownloadLink, SocialMediaLink
+from contact_us.models import Support, FAQ, ContactUsMessage, SubsciberEmail, Address, APPDownloadLink, SocialMediaLink, LandingPageContent
 from django.views.generic import TemplateView, View
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
@@ -1882,6 +1882,70 @@ class ManageContactView(TemplateView):
         context['title'] = 'Manage Contact'
 
         return context
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class ManageLandingPageView(TemplateView):
+    template_name = 'custom-admin/services/manage-landing-page.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        landing = LandingPageContent.objects.first()
+        if not landing:
+            landing = LandingPageContent.objects.create()
+        context.update({
+            'title': 'Manage Landing Page',
+            'landing': landing,
+        })
+        return context
+
+@method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
+class UpdateLandingPageView(View):
+    def post(self, request):
+        landing, _ = LandingPageContent.objects.get_or_create(pk=1)
+
+        # Text fields
+        landing.banner_title = request.POST.get('banner_title') or None
+        landing.banner_description = request.POST.get('banner_description') or None
+        landing.business_section_title = request.POST.get('business_section_title') or None
+        landing.business_section_description = request.POST.get('business_section_description') or None
+        landing.card_section_title = request.POST.get('card_section_title') or None
+        landing.card_section_description = request.POST.get('card_section_description') or None
+        landing.news_section_title = request.POST.get('news_section_title') or None
+        landing.news_section_description = request.POST.get('news_section_description') or None
+        landing.touch_section_title = request.POST.get('touch_section_title') or None
+        landing.touch_section_description = request.POST.get('touch_section_description') or None
+        landing.faq_section_title = request.POST.get('faq_section_title') or None
+        landing.faq_section_description = request.POST.get('faq_section_description') or None
+        landing.footer_section_title = request.POST.get('footer_section_title') or None
+        landing.footer_section_description = request.POST.get('footer_section_description') or None
+
+        # Images
+        banner_image = request.FILES.get('banner_image')
+        card_section_image = request.FILES.get('card_section_image')
+        try:
+            if banner_image:
+                # delete old file if exists
+                try:
+                    if landing.banner_image and default_storage.exists(landing.banner_image.name):
+                        default_storage.delete(landing.banner_image.name)
+                except Exception:
+                    pass
+                landing.banner_image = banner_image
+
+            if card_section_image:
+                try:
+                    if landing.card_section_image and default_storage.exists(landing.card_section_image.name):
+                        default_storage.delete(landing.card_section_image.name)
+                except Exception:
+                    pass
+                landing.card_section_image = card_section_image
+
+            landing.save()
+            messages.success(request, 'Landing page content updated successfully')
+        except Exception as e:
+            messages.error(request, f'Error updating landing content: {str(e)}')
+
+        return redirect('admin_panel:manage_landing_page')
 
 @method_decorator(user_passes_test(is_superadmin, login_url='admin_panel:login'), name='dispatch')
 class SupportUpdateView(View):

@@ -1,6 +1,6 @@
 from google_crc32c import value
 from rest_framework import serializers
-from .models import ContactUsMessage, FAQ, Support, SubsciberEmail
+from .models import ContactUsMessage, FAQ, Support, SubsciberEmail, LandingPageContent
 
 class SupportSerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,3 +26,8 @@ class SubscriberEmailSerializer(serializers.ModelSerializer):
     #     if SubsciberEmail.objects.filter(email=value).exists():
     #         raise serializers.ValidationError("This email is already subscribed.")
     #     return value
+
+class LandingPageContentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LandingPageContent
+        fields = '__all__'

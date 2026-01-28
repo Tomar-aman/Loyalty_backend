@@ -153,3 +153,91 @@ class APPDownloadLink(BaseModel):
     class Meta:
         verbose_name = _("App Download Link")
         verbose_name_plural = _("App Download Links")
+
+class LandingPageContent(BaseModel):
+    banner_title = models.TextField(
+        _("Banner Title"),
+        blank=True,
+        null=True
+    )
+    banner_description = models.TextField(
+        _("Banner Description"),
+        blank=True,
+        null=True
+    )
+    banner_image = models.ImageField(
+        _("Banner Image"),
+        upload_to='landing_page/',
+        blank=True,
+        null=True
+    )
+
+    business_section_title = models.TextField(
+        _("Business Section Title"),
+        blank=True,
+        null=True
+    )
+    business_section_description = models.TextField(
+        _("Business Section Description"),
+        blank=True,
+        null=True
+    )
+    card_section_title = models.TextField(
+        _("Card Section Title"),
+        blank=True,
+        null=True
+    )
+    card_section_description = models.TextField(
+        _("Card Section Description"),
+        blank=True,
+        null=True
+    )
+    card_section_image = models.ImageField(
+        _("Card Section Image"),
+        upload_to='landing_page/',
+        blank=True,
+        null=True
+    )
+    news_section_title = models.TextField(
+        _("News Section Title"),
+        blank=True,
+        null=True
+    )
+    news_section_description = models.TextField(
+        _("News Section Description"),
+        blank=True,
+        null=True
+    )
+    touch_section_title = models.TextField(
+        _("Get in Touch Section Title"),
+        blank=True,
+        null=True
+    )
+    touch_section_description = models.TextField(
+        _("Get in Touch Section Description"),
+        blank=True,
+        null=True
+    )
+    faq_section_title = models.TextField(
+        _("FAQ Section Title"),
+        blank=True,
+        null=True
+    )
+    faq_section_description = models.TextField(
+        _("FAQ Section Description"),
+        blank=True,
+        null=True
+    )
+    footer_section_title = models.TextField(
+        _("Footer Section Title"),
+        blank=True,
+        null=True
+    )
+    footer_section_description = models.TextField(
+        _("Footer Section Description"),
+        blank=True,
+        null=True
+    )
+    class Meta:
+        verbose_name = _("Landing Page Content")
+        verbose_name_plural = _("Landing Page Contents")

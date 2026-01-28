@@ -1,8 +1,8 @@
 from rest_framework.generics import GenericAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import ContactUsMessage, FAQ, Support, SubsciberEmail
-from .serializers import SupportSerializer, FAQSerializer, ContactUsMessageSerializer, SubscriberEmailSerializer
+from .models import ContactUsMessage, FAQ, LandingPageContent, Support, SubsciberEmail
+from .serializers import SupportSerializer, FAQSerializer, ContactUsMessageSerializer, SubscriberEmailSerializer, LandingPageContentSerializer
 from rest_framework.permissions import AllowAny
 
 class SupportListView(GenericAPIView):
@@ -55,3 +55,16 @@ class SubscriberEmailCreateView(GenericAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)  
+
+class LandingPageContentView(RetrieveAPIView):
+    serializer_class = LandingPageContentSerializer
+    permission_classes = [AllowAny]
+    queryset = LandingPageContent.objects.get(pk=1)
+
+    def get(self, request, *args, **kwargs):
+        try:
+            landing_content = self.get_queryset()
+            serializer = self.get_serializer(landing_content, context ={'request': request})
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

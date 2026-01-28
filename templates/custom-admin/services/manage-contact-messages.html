@@ -56,6 +56,16 @@
                   </div>
                 </td>
                 <td>
+                  <button class="tableActionBtn view-msg" data-bs-toggle="modal" data-bs-target="#viewMsgModal"
+                          data-id="{{ m.id }}"
+                          data-name="{{ m.name|escapejs }}"
+                          data-email="{{ m.email|escapejs }}"
+                          data-subject="{{ m.subject|default_if_none:''|escapejs }}"
+                          data-message="{{ m.message|default_if_none:''|escapejs }}"
+                          data-created="{{ m.created_at|date:'Y-m-d H:i' }}"
+                          data-status="{% if m.is_resolved %}Resolved{% else %}Pending{% endif %}">
+                    <i class="fa fa-eye"></i>
+                  </button>
                   <button class="tableActionBtn delete-msg" data-bs-toggle="modal" data-bs-target="#deleteMsgModal" data-id="{{ m.id }}">
                     <i class="fa fa-trash"></i>
                   </button>
@@ -91,6 +101,53 @@
   </div>
 </section>
 
+<!-- View Message Modal -->
+<div class="modal fade customModal addDataModal" id="viewMsgModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="H2Heading">Message Details</h6>
+        <button type="button" class="hideClose_Modal" data-bs-dismiss="modal">
+          <img src="{% static 'admin/images/close.png' %}">
+        </button>
+      </div>
+      <div class="modal-body row row-gap-4">
+        <div class="col-md-6">
+          <label class="inputLabel">ID</label>
+          <div id="vm_id" class="customInput" style="min-height: 40px; padding: 8px 12px;"></div>
+        </div>
+        <div class="col-md-6">
+          <label class="inputLabel">Status</label>
+          <div id="vm_status" class="customInput" style="min-height: 40px; padding: 8px 12px;"></div>
+        </div>
+        <div class="col-md-6">
+          <label class="inputLabel">Name</label>
+          <div id="vm_name" class="customInput" style="min-height: 40px; padding: 8px 12px;"></div>
+        </div>
+        <div class="col-md-6">
+          <label class="inputLabel">Email</label>
+          <div id="vm_email" class="customInput" style="min-height: 40px; padding: 8px 12px;"></div>
+        </div>
+        <div class="col-md-12">
+          <label class="inputLabel">Subject</label>
+          <div id="vm_subject" class="customInput" style="min-height: 40px; padding: 8px 12px;"></div>
+        </div>
+        <div class="col-md-12">
+          <label class="inputLabel">Message</label>
+          <div id="vm_message" class="customInput" style="min-height: 100px; padding: 12px; white-space: pre-wrap;"></div>
+        </div>
+        <div class="col-md-12">
+          <label class="inputLabel">Created</label>
+          <div id="vm_created" class="customInput" style="min-height: 40px; padding: 8px 12px;"></div>
+        </div>
+        <div class="modalFooter">
+          <button type="button" class="customButton" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
 <!-- Delete Message Modal -->
 <div class="modal fade customModal addDataModal" id="deleteMsgModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -122,6 +179,17 @@ $(document).ready(function() {
   $('.delete-msg').click(function() {
     const id = $(this).data('id');
     $('#deleteMsgForm').attr('action', `{% url 'admin_panel:contact_message_delete' 0 %}`.replace('0', id));
+  });
+
+  $('.view-msg').click(function() {
+    const btn = $(this);
+    $('#vm_id').text(btn.data('id'));
+    $('#vm_status').text(btn.data('status'));
+    $('#vm_name').text(btn.data('name'));
+    $('#vm_email').text(btn.data('email'));
+    $('#vm_subject').text(btn.data('subject'));
+    $('#vm_message').text(btn.data('message'));
+    $('#vm_created').text(btn.data('created'));
   });
 });
 </script>

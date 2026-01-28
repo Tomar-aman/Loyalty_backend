@@ -1,0 +1,163 @@
+{% extends 'custom-admin/base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="manageActivitiesPage managepadding manageallpage">
+  <div class="container-fluid">
+    <div class="topContent">
+      <h2 class="H2Heading">Manage Landing Page</h2>
+    </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show">
+          {{ message }}
+          <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="scrollableTable">
+      <form method="post" action="{% url 'admin_panel:landing_update' %}" enctype="multipart/form-data" class="row row-gap-4">
+        {% csrf_token %}
+
+        <!-- Banner Section -->
+        <div class="col-md-12">
+          <h4 class="H4Heading mt-2">Banner</h4>
+        </div>
+        <div class="col-md-6">
+          <label class="inputLabel" for="banner_title">Banner Title</label>
+          <textarea name="banner_title" id="banner_title" class="customInput" rows="2">{{ landing.banner_title }}</textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="inputLabel" for="banner_description">Banner Description</label>
+          <textarea name="banner_description" id="banner_description" class="customInput" rows="2">{{ landing.banner_description }}</textarea>
+        </div>
+        <div class="col-md-12">
+          <label class="inputLabel" for="banner_image">Banner Image</label>
+          <input type="file" name="banner_image" id="banner_image" class="customInput" accept="image/*">
+          {% if landing.banner_image %}
+            <div class="mt-2">
+              <img src="{{ landing.banner_image.url }}" alt="Banner Image" style="max-height:160px; object-fit:contain;">
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Business Section -->
+        <div class="col-md-12">
+          <h4 class="H4Heading mt-4">Business Section</h4>
+        </div>
+        <div class="col-md-6">
+          <label class="inputLabel" for="business_section_title">Title</label>
+          <textarea name="business_section_title" id="business_section_title" class="customInput" rows="2">{{ landing.business_section_title }}</textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="inputLabel" for="business_section_description">Description</label>
+          <textarea name="business_section_description" id="business_section_description" class="customInput" rows="2">{{ landing.business_section_description }}</textarea>
+        </div>
+
+        <!-- Card Section -->
+        <div class="col-md-12">
+          <h4 class="H4Heading mt-4">Card Section</h4>
+        </div>
+        <div class="col-md-6">
+          <label class="inputLabel" for="card_section_title">Title</label>
+          <textarea name="card_section_title" id="card_section_title" class="customInput" rows="2">{{ landing.card_section_title }}</textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="inputLabel" for="card_section_description">Description</label>
+          <textarea name="card_section_description" id="card_section_description" class="customInput" rows="2">{{ landing.card_section_description }}</textarea>
+        </div>
+        <div class="col-md-12">
+          <label class="inputLabel" for="card_section_image">Card Section Image</label>
+          <input type="file" name="card_section_image" id="card_section_image" class="customInput" accept="image/*">
+          {% if landing.card_section_image %}
+            <div class="mt-2">
+              <img src="{{ landing.card_section_image.url }}" alt="Card Section Image" style="max-height:160px; object-fit:contain;">
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- News Section -->
+        <div class="col-md-12">
+          <h4 class="H4Heading mt-4">News Section</h4>
+        </div>
+        <div class="col-md-6">
+          <label class="inputLabel" for="news_section_title">Title</label>
+          <textarea name="news_section_title" id="news_section_title" class="customInput" rows="2">{{ landing.news_section_title }}</textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="inputLabel" for="news_section_description">Description</label>
+          <textarea name="news_section_description" id="news_section_description" class="customInput" rows="2">{{ landing.news_section_description }}</textarea>
+        </div>
+
+        <!-- Get in Touch Section -->
+        <div class="col-md-12">
+          <h4 class="H4Heading mt-4">Get in Touch Section</h4>
+        </div>
+        <div class="col-md-6">
+          <label class="inputLabel" for="touch_section_title">Title</label>
+          <textarea name="touch_section_title" id="touch_section_title" class="customInput" rows="2">{{ landing.touch_section_title }}</textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="inputLabel" for="touch_section_description">Description</label>
+          <textarea name="touch_section_description" id="touch_section_description" class="customInput" rows="2">{{ landing.touch_section_description }}</textarea>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="col-md-12">
+          <h4 class="H4Heading mt-4">FAQ Section</h4>
+        </div>
+        <div class="col-md-6">
+          <label class="inputLabel" for="faq_section_title">Title</label>
+          <textarea name="faq_section_title" id="faq_section_title" class="customInput" rows="2">{{ landing.faq_section_title }}</textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="inputLabel" for="faq_section_description">Description</label>
+          <textarea name="faq_section_description" id="faq_section_description" class="customInput" rows="2">{{ landing.faq_section_description }}</textarea>
+        </div>
+
+        <!-- Footer Section -->
+        <div class="col-md-12">
+          <h4 class="H4Heading mt-4">Footer Section</h4>
+        </div>
+        <div class="col-md-6">
+          <label class="inputLabel" for="footer_section_title">Title</label>
+          <textarea name="footer_section_title" id="footer_section_title" class="customInput" rows="2">{{ landing.footer_section_title }}</textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="inputLabel" for="footer_section_description">Description</label>
+          <textarea name="footer_section_description" id="footer_section_description" class="customInput" rows="2">{{ landing.footer_section_description }}</textarea>
+        </div>
+
+        <div class="modalFooter mt-3">
+          <button type="submit" class="customButton">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+// Optional: preview selected images
+(function(){
+  const bindPreview = (inputId) => {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.addEventListener('change', function(){
+      const file = this.files && this.files[0];
+      if (!file) return;
+      const img = this.parentElement.querySelector('img');
+      if (!img) return;
+      const reader = new FileReader();
+      reader.onload = (e) => { img.src = e.target.result; };
+      reader.readAsDataURL(file);
+    });
+  };
+  bindPreview('banner_image');
+  bindPreview('card_section_image');
+})();
+</script>
+{% endblock %}
