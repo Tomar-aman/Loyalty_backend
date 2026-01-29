@@ -229,13 +229,15 @@ class UserDetailsSerializer(serializers.ModelSerializer):
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
+        if not country_name:
+            country_name = instance.country.name if instance.country else None
         city = City.objects.only("id").filter(name__iexact=city_name).first() if city_name else None
         country = Country.objects.only("id").filter(name__iexact=country_name).first() if country_name else None
 
         if city is not None:
             instance.city = city
         else:
-            new_city = City.objects.create(name=city_name, country=country) if city_name else None
+            new_city = City.objects.create(name=city_name.capitalize(), country=country) if city_name else None
             instance.city = new_city
         if country is not None:
             instance.country = country
