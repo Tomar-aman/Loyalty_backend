@@ -224,7 +224,6 @@ class UserDetailsSerializer(serializers.ModelSerializer):
         # Update nested fields
         city_name = validated_data.pop('city_name', None)
         country_name = validated_data.pop('country_name', None)
-        print(f"Updating user details with city_name: {city_name}, country_name: {country_name}")
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)

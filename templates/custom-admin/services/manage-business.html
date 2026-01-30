@@ -57,6 +57,7 @@
                           data-is-featured="{{ business.is_featured }}"
                           data-gallery-images="{% for img in business.gallery_images.all %}{{ img.image.url }}{% if not forloop.last %}|{% endif %}{% endfor %}"
                           data-gallery-ids="{% for img in business.gallery_images.all %}{{ img.id }}{% if not forloop.last %}|{% endif %}{% endfor %}"
+                      data-logo-url="{% if business.logo %}{{ business.logo.url }}{% endif %}"
                           data-edit-url="{% url 'admin_panel:business_edit' business.id %}">
                     <i class="fa fa-edit"></i>
                   </button>
@@ -308,6 +309,9 @@
               <label class="inputLabel">Logo</label>
               <input type="file" id="edit_logo" name="logo"
                      class="customInput">
+              <div id="editLogoPreview" style="margin-top: 8px;">
+                <!-- Current logo preview will appear here -->
+              </div>
             </div>
 
             <!-- In EDIT BUSINESS MODAL, update gallery section: -->
@@ -602,13 +606,19 @@ function displayExistingGalleryImages(imageUrls, imageIds) {
     const existingContainer = document.getElementById('existingImagesContainer');
     existingContainer.innerHTML = '';
 
-    if (imageUrls && imageUrls.trim() !== '') {
-        const urls = imageUrls.split('|');
-        const ids = imageIds.split('|');
+  const toArray = (val) => {
+    if (!val) return [];
+    const s = String(val);
+    if (s.trim() === '') return [];
+    return s.split('|');
+  };
+
+  const urls = toArray(imageUrls);
+  const ids = toArray(imageIds);
 
         urls.forEach((url, index) => {
             if (url.trim() !== '') {
-                const imageId = ids[index];
+        const imageId = ids[index] || '';
                 const imageHTML = `
                     <div style="position: relative; display: inline-block; margin: 5px;" data-image-id="${imageId}">
                         <img src="${url}" alt="Gallery" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid #ddd;">
@@ -623,7 +633,7 @@ function displayExistingGalleryImages(imageUrls, imageIds) {
                 existingContainer.innerHTML += imageHTML;
             }
         });
-    }
+    
 
     // Show/hide the existing images section
     const existingSection = document.getElementById('existingGalleryImages');
@@ -692,13 +702,14 @@ window.unmarkImageForDeletion = function(imageId, button, imageDiv) {
         var editUrl = $(this).data('edit-url');
         var galleryImages = $(this).data('gallery-images');
         var galleryIds = $(this).data('gallery-ids');
+        var logoUrl = $(this).data('logo-url');
 
         $('#edit_business_id').val(businessId);
         $('#edit_name').val(name);
         $('#edit_owner').val(ownerId).trigger('change.select2');
         $('#edit_category').val(categoryId).trigger('change.select2');
         $('#edit_description').val(description);
-        $('#edit_address').val(address);
+        $('#edit_address_autocomplete').val(address);
         $('#edit_latitude').val(latitude);
         $('#edit_longitude').val(longitude);
         $('#edit_phone_number').val(phoneNumber);
@@ -716,6 +727,15 @@ window.unmarkImageForDeletion = function(imageId, button, imageDiv) {
         $('#deletedImageIds').val('');
 
         displayExistingGalleryImages(galleryImages, galleryIds);
+
+        // Show current logo preview
+        const logoPreview = document.getElementById('editLogoPreview');
+        if (logoPreview) {
+          logoPreview.innerHTML = '';
+          if (logoUrl) {
+            logoPreview.innerHTML = `<img src="${logoUrl}" alt="Logo" style="height: 80px; border-radius: 6px; border: 1px solid #ddd;">`;
+          }
+        }
     });
 
     // ===== DELETE BUSINESS MODAL =====
