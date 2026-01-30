@@ -18,7 +18,7 @@ def send_mail(subject, email_template_name, context, to_email, **kwargs):
         host_pass = mail_setting.password
         host_port = mail_setting.port
         use_tls = mail_setting.use_tls
-        from_email = f"Loyalty <{mail_setting.from_email}>"
+        from_email = f"{mail_setting.from_email}"
     else:
         host = settings.EMAIL_HOST
         host_user = settings.EMAIL_HOST_USER
@@ -27,6 +27,7 @@ def send_mail(subject, email_template_name, context, to_email, **kwargs):
         use_tls = settings.EMAIL_USE_TLS
         from_email = f"Loyalty <{settings.EMAIL_HOST_USER}>"
 
+    # print("SMTP Settings:", host, host_user, host_port, use_tls, from_email)
     # 2. Create EmailBackend instance (your requirement)
     backend = EmailBackend(
         host=host,
@@ -34,9 +35,9 @@ def send_mail(subject, email_template_name, context, to_email, **kwargs):
         username=host_user,
         password=host_pass,
         use_tls=use_tls,
-        timeout=10
+        timeout=15
     )
-
+    # print(backend)
     # 3. Render email template
     html_body = render_to_string(email_template_name, context)
 

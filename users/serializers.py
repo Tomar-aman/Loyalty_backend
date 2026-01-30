@@ -85,12 +85,12 @@ class SignupSerializer(serializers.ModelSerializer):
         )
 
         # Send OTP
-        # send_mail(
-        #     subject="Your OTP Code",
-        #     email_template_name='email/otp_email.html',
-        #     context={"user": user, "otp_code": otp_code},
-        #     to_email=user.email
-        # )
+        send_mail(
+            subject="Your OTP Code",
+            email_template_name='email/otp_email.html',
+            context={"user": user, "otp_code": otp_code},
+            to_email=user.email
+        )
 
         return otp_code
 
@@ -153,15 +153,15 @@ class ResendOTPSerializer(serializers.Serializer):
             # otp_code = ''.join(random.choices('0123456789', k=6))
             otp_code = str(random.randint(100000, 999999))
             otp = OTP.objects.create(user=user, otp_code=otp_code, expires_at=timezone.now() + timedelta(minutes=10))
-            # send_mail(
-            #     subject="Your New OTP Code",
-            #     email_template_name="email/resend_otp_email.html",
-            #     context={
-            #         "user": user,
-            #         "otp_code": otp_code
-            #     },
-            #     to_email=user.email
-            # )
+            send_mail(
+                subject="Your New OTP Code",
+                email_template_name="email/resend_otp_email.html",
+                context={
+                    "user": user,
+                    "otp_code": otp_code
+                },
+                to_email=user.email
+            )
             return otp
         except User.DoesNotExist:
             raise serializers.ValidationError("User not found.")

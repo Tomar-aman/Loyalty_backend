@@ -12,6 +12,16 @@
             <i class="fa fa-plus"></i> Add Business
           </button>
         </div>
+         {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{% if message.tags == "error" %}danger alert-dismissible fade show{% else %}{{message.tags}} alert-dismissible fade show{% endif %}" role="alert">
+              {{ message }}
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+          {% endfor %}
+        {% endif %}
         <div class="scrollableTable">
           <table class="customTable">
             <thead>
