@@ -175,6 +175,7 @@ class BuyCardSerializer(serializers.Serializer):
             '1_month': 30,
             '1_week': 7,
             '1_day': 1,
+            '1_year': 365,
         }
         if duration not in duration_map:
             raise serializers.ValidationError("Invalid card duration.")
