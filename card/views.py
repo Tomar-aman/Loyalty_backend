@@ -50,6 +50,8 @@ class CancelSubscriptionView(GenericAPIView):
             if serializer.is_valid(raise_exception=True):
                 card_id = serializer.validated_data['id']
                 user_card = UserCard.objects.get(id=card_id, user=request.user, is_active=True)
+                user_card.is_active = False
+                user_card.save()
                 # Log history
                 UserCardHistory.objects.create(
                     user=user_card.user,
