@@ -8,6 +8,7 @@ class Card(models.Model):
         ('1_day', '1 Day'),
         ('1_week', '1 Week'),
         ('1_month', '1 Month'),
+        ('1_year', '1 Month'),
     ]
     name = models.CharField(
         max_length=100,
