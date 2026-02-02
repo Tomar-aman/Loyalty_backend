@@ -128,7 +128,8 @@ class BuyCardSerializer(serializers.Serializer):
 
             # A) Renew logic (extend existing end_at)
             if existing_user_card.is_active:
-                existing_user_card.end_at += timedelta(days=days)
+                # existing_user_card.end_at += timedelta(days=days)
+                existing_user_card.end_at = timedelta(days=days)
             else:
                 # B) Reactivate logic (reset new cycle)
                 existing_user_card.start_at = now
