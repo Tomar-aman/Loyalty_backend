@@ -3,9 +3,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import NewsArticle
 from .serializers import NewsArticleSerializer
+from rest_framework.permissions import AllowAny
 from django.db import DatabaseError
 
 class NewsArticleListView(GenericAPIView):
+    permission_classes = [AllowAny]
     queryset = NewsArticle.objects.all().order_by('-published_at')
     serializer_class = NewsArticleSerializer
 

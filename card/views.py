@@ -3,8 +3,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from .serializers import CancelSubscriptionSerializer, CardSerializer, UserCardSerializer, BuyCardSerializer
 from .models import Card, UserCard, UserCardHistory
+from rest_framework.permissions import AllowAny
 
 class CardListView(GenericAPIView):
+    permission_classes = [AllowAny]
     queryset = Card.objects.all().order_by('price')
     serializer_class = CardSerializer
 
