@@ -18,6 +18,7 @@ from business.serializers import (
     RedeemedOfferSerializer
 )
 from django.utils import timezone
+from rest_framework.permissions import AllowAny
 
 class BusinessCategoryListView(GenericAPIView):
     serializer_class = BusinessCategorySerializer
@@ -34,6 +35,7 @@ class BusinessListView(GenericAPIView):
     """
     GET /api/businesses/  -> list active businesses (summary)
     """
+    permission_classes = [AllowAny]
     serializer_class = BusinessSerializer
     queryset = Business.objects.filter(is_active=True).select_related('category')
 
@@ -71,6 +73,7 @@ class BusinessDetailView(RetrieveAPIView):
     """
     GET /api/businesses/<pk>/ -> detailed business info
     """
+    permission_classes = [AllowAny]
     serializer_class = BusinessDetailSerializer
     queryset = Business.objects.all()
 
@@ -84,7 +87,7 @@ class PopularDealsAPIView(ListAPIView):
     Returns all active popular deals with their business details.
     """
     serializer_class = PopularOfferSerializer
-
+    permission_classes = [AllowAny]
     def get_queryset(self):
         now = timezone.now()
         return (
