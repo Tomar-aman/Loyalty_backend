@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ContactUsMessage, FAQ, Support, SubsciberEmail, Address, SocialMediaLink, APPDownloadLink
+from .models import ContactUsMessage, FAQ, Support, SubsciberEmail, Address, SocialMediaLink, APPDownloadLink, LandingPageContent
 
 @admin.register(Support)
 class SupportAdmin(admin.ModelAdmin):
@@ -36,3 +36,7 @@ class SocialMediaLinkAdmin(admin.ModelAdmin):
 @admin.register(APPDownloadLink)
 class APPDownloadLinkAdmin(admin.ModelAdmin):
     list_display = ('android_link', 'ios_link', 'created_at', 'updated_at')
+
+@admin.register(LandingPageContent)
+class LandingPageContentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'created_at', 'updated_at')
