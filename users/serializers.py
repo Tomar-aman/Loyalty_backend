@@ -7,7 +7,8 @@ from config.utils import send_mail
 import requests
 from django.core.files.base import ContentFile
 from card.serializers import UserCardSerializer
-
+from firebase_admin import auth
+from notification.firebase import init_firebase
 class CountrySerializer(serializers.ModelSerializer):
     class Meta:
         model = Country
@@ -384,52 +385,52 @@ class GoogleAuthSerializer(serializers.Serializer):
 #             raise serializers.ValidationError(f"Invalid token. {str(e)}")
 
 
-# class AppleFirebaseAuthSerializer(serializers.Serializer):
-#     token = serializers.CharField()
+class AppleFirebaseAuthSerializer(serializers.Serializer):
+    token = serializers.CharField()
 
-#     def validate(self, attrs):
-#         if not initialize_firebase():
-#             raise serializers.ValidationError("Firebase is not configured.")
-#         token = attrs.get("token")
-#         if not token:
-#             raise serializers.ValidationError("Token is required.")
+    def validate(self, attrs):
+        if not init_firebase():
+            raise serializers.ValidationError("Firebase is not configured.")
+        token = attrs.get("token")
+        if not token:
+            raise serializers.ValidationError("Token is required.")
 
-#         try:
-#             # Step 1: Verify Firebase ID token (already verified by Firebase backend)
-#             decoded = auth.verify_id_token(token)
+        try:
+            # Step 1: Verify Firebase ID token (already verified by Firebase backend)
+            decoded = auth.verify_id_token(token)
 
-#             email = decoded.get("email")
-#             uid = decoded.get("uid")
-#             name = decoded.get("name", "")
-#             provider = decoded.get("firebase", {}).get("sign_in_provider")
+            email = decoded.get("email")
+            uid = decoded.get("uid")
+            name = decoded.get("name", "")
+            provider = decoded.get("firebase", {}).get("sign_in_provider")
 
-#             if provider != "apple.com":
-#                 raise serializers.ValidationError("Invalid provider for this endpoint.")
+            if provider != "apple.com":
+                raise serializers.ValidationError("Invalid provider for this endpoint.")
 
-#             first_name = name.split()[0] if name else ""
-#             last_name = " ".join(name.split()[1:]) if len(name.split()) > 1 else ""
+            first_name = name.split()[0] if name else ""
+            last_name = " ".join(name.split()[1:]) if len(name.split()) > 1 else ""
 
-#             # Step 2: Create or get the user
-#             user, created = User.objects.get_or_create(
-#                 email=email,
-#                 defaults={
-#                     "first_name": first_name,
-#                     "last_name": last_name,
-#                     "apple_id": uid,
-#                 }
-#             )
+            # Step 2: Create or get the user
+            user, created = User.objects.get_or_create(
+                email=email,
+                defaults={
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "apple_id": uid,
+                }
+            )
 
-#             # Step 3: Update Apple ID if missing
-#             if not created and not user.apple_id:
-#                 user.apple_id = uid
-#                 user.save()
+            # Step 3: Update Apple ID if missing
+            if not created and not user.apple_id:
+                user.apple_id = uid
+                user.save()
 
-#             attrs["user"] = user
-#             attrs["is_new_user"] = created
-#             return attrs
+            attrs["user"] = user
+            attrs["is_new_user"] = created
+            return attrs
 
-#         except Exception as e:
-#             raise serializers.ValidationError(f"Invalid Firebase token: {str(e)}")
+        except Exception as e:
+            raise serializers.ValidationError(f"Invalid Firebase token: {str(e)}")
 
     
 class ChangePasswordSerializer(serializers.Serializer):

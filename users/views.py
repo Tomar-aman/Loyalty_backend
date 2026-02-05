@@ -2,7 +2,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from users.models import City, Country, UserSearchHistory
-from users.serializers import CitySerializer, CompleteSignUpSerializer, LogoutSerializer, SignupSerializer, OTPVerificationSerializer, ResendOTPSerializer, UserDetailsSerializer, GoogleAuthSerializer, CountrySerializer, UserSearchHistorySerializer
+from users.serializers import CitySerializer, CompleteSignUpSerializer, LogoutSerializer, SignupSerializer, OTPVerificationSerializer, ResendOTPSerializer, UserDetailsSerializer, GoogleAuthSerializer, CountrySerializer, UserSearchHistorySerializer, AppleFirebaseAuthSerializer
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework import filters
@@ -150,31 +150,31 @@ class GoogleLoginView(GenericAPIView):
 
 #         return Response(user_data, status=status.HTTP_200_OK)
 
-# class AppleFirebaseLoginView(GenericAPIView):
-#     """
-#     Apple Login View using Firebase
-#     """
-#     serializer_class = AppleFirebaseAuthSerializer
-#     permission_classes = [AllowAny]
+class AppleFirebaseLoginView(GenericAPIView):
+    """
+    Apple Login View using Firebase
+    """
+    serializer_class = AppleFirebaseAuthSerializer
+    permission_classes = [AllowAny]
 
-#     def post(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data, context={'request': request})
-#         serializer.is_valid(raise_exception=True)
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
 
-#         user = serializer.validated_data['user']
-#         is_new_user = serializer.validated_data['is_new_user']
-#         refresh = RefreshToken.for_user(user)
+        user = serializer.validated_data['user']
+        is_new_user = serializer.validated_data['is_new_user']
+        refresh = RefreshToken.for_user(user)
 
-#         user_data = UserDetailsSerializer(user, context={'request': request}).data
-#         user_data["refresh"] = str(refresh)
-#         user_data["access"] = str(refresh.access_token)
-#         user_data["is_new_user"] = is_new_user
-#         user_data["message"] = (
-#             "Signup successful. Welcome!" if is_new_user
-#             else "Login successful. Welcome back!"
-#         )
+        user_data = UserDetailsSerializer(user, context={'request': request}).data
+        user_data["refresh"] = str(refresh)
+        user_data["access"] = str(refresh.access_token)
+        user_data["is_new_user"] = is_new_user
+        user_data["message"] = (
+            "Signup successful. Welcome!" if is_new_user
+            else "Login successful. Welcome back!"
+        )
 
-#         return Response(user_data, status=status.HTTP_200_OK)
+        return Response(user_data, status=status.HTTP_200_OK)
 
 
 class ProfileView(GenericAPIView):

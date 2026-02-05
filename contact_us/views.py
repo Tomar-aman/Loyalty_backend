@@ -1,8 +1,8 @@
 from rest_framework.generics import GenericAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import ContactUsMessage, FAQ, LandingPageContent, Support, SubsciberEmail
-from .serializers import SupportSerializer, FAQSerializer, ContactUsMessageSerializer, SubscriberEmailSerializer, LandingPageContentSerializer
+from .models import APPDownloadLink, ContactUsMessage, FAQ, LandingPageContent, SocialMediaLink, Support, SubsciberEmail
+from .serializers import SupportSerializer, FAQSerializer, ContactUsMessageSerializer, SubscriberEmailSerializer, LandingPageContentSerializer, SocialMediaLinkSerializer, APPDownloadLinkSerializer
 from rest_framework.permissions import AllowAny
 
 class SupportListView(GenericAPIView):
@@ -55,6 +55,34 @@ class SubscriberEmailCreateView(GenericAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)  
+        
+
+class SocialMediaLinkView(RetrieveAPIView):
+    serializer_class = SocialMediaLinkSerializer
+    permission_classes = [AllowAny]
+    queryset = SocialMediaLink.objects.last()
+
+    def get(self, request, *args, **kwargs):
+        try:
+            social_links = self.get_queryset()
+            serializer = self.get_serializer(social_links)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class APPDownloadLinkView(RetrieveAPIView):
+    serializer_class = APPDownloadLinkSerializer
+    permission_classes = [AllowAny]
+    queryset = APPDownloadLink.objects.last()
+
+    def get(self, request, *args, **kwargs):
+        try:
+            app_links = self.get_queryset()
+            serializer = self.get_serializer(app_links)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 
 class LandingPageContentView(RetrieveAPIView):
     serializer_class = LandingPageContentSerializer
