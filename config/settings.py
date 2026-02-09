@@ -185,8 +185,8 @@ DEFAULT_FROM_EMAIL = config("DJANGO_DEFAULT_FROM_EMAIL")
 
 # JWT settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': config('JWT_ACCESS_TOKEN_LIFETIME', default=timedelta(days=10)),  # 1 hour
-    'REFRESH_TOKEN_LIFETIME': config('JWT_REFRESH_TOKEN_LIFETIME', default=timedelta(days=1)),  # 24 hours
+    'ACCESS_TOKEN_LIFETIME': config('JWT_ACCESS_TOKEN_LIFETIME', default=timedelta(days=365)),  # 1 hour
+    'REFRESH_TOKEN_LIFETIME': config('JWT_REFRESH_TOKEN_LIFETIME', default=timedelta(days=365)),  # 24 hours
     'ROTATE_REFRESH_TOKENS': config('JWT_ROTATE_REFRESH_TOKENS', default=True, cast=bool),
     'BLACKLIST_AFTER_ROTATION': config('JWT_BLACKLIST_AFTER_ROTATION', default=True, cast=bool),
     'ALGORITHM': config('JWT_ALGORITHM', default='HS256'),
