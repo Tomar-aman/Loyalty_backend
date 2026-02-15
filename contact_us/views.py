@@ -101,7 +101,6 @@ class LandingPageContentView(GenericAPIView):
             landing_content = LandingPageContent.objects.filter().last()
             if not landing_content:
                 return Response({"error": "No landing page content found"}, status=status.HTTP_404_NOT_FOUND)
-            print(f"Landing content banner title: {landing_content.banner_title}")
             serializer = self.get_serializer(landing_content, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
