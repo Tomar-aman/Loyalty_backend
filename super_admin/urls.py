@@ -102,6 +102,9 @@ urlpatterns = [
     path('contact-messages/<int:message_id>/toggle/', views.ContactMessageToggleResolveView.as_view(), name='contact_message_toggle'),
     path('contact-messages/<int:message_id>/delete/', views.ContactMessageDeleteView.as_view(), name='contact_message_delete'),
 
+    # Subscriber Email Management
+    path('subscribers/', views.ManageSubscriberEmailsView.as_view(), name='manage_subscribers'),
+
     # Landing Page Management
     path('landing-page/', views.ManageLandingPageView.as_view(), name='manage_landing_page'),
     path('landing-page/update/', views.UpdateLandingPageView.as_view(), name='landing_update'),

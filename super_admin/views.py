@@ -2129,3 +2129,106 @@ class ContactMessageDeleteView(View):
         except ContactUsMessage.DoesNotExist:
             messages.error(request, 'Message not found')
         return redirect('admin_panel:manage_contact_messages')
+
+
+@method_decorator(user_passes_test(is_admin, login_url='admin_panel:login'), name='dispatch')
+class ManageSubscriberEmailsView(TemplateView):
+    template_name = 'custom-admin/services/manage-subscriber.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get search query
+        search_query = self.request.GET.get('search', '')
+        page = self.request.GET.get('page', 1)
+        
+        # Filter subscribers
+        subscribers = SubsciberEmail.objects.all()
+        if search_query:
+            subscribers = subscribers.filter(
+                email__icontains=search_query
+            )
+        
+        # Order by creation date (newest first)
+        subscribers = subscribers.order_by('-created_at')
+        
+        # Paginate results
+        paginator = Paginator(subscribers, 25)  # Show 25 subscribers per page
+        subscribers_page = paginator.get_page(page)
+        
+        context['subscribers'] = subscribers_page
+        context['search_query'] = search_query
+        context['title'] = 'Manage Subscriber Emails'
+        return context
+
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get('action')
+        
+        if action == 'add_edit':
+            return self._handle_add_edit(request)
+        elif action == 'delete':
+            return self._handle_delete(request)
+        elif action == 'bulk_delete':
+            return self._handle_bulk_delete(request)
+        
+        # If no action or invalid action, show the form again
+        return self.get(request, *args, **kwargs)
+    
+    def _handle_add_edit(self, request):
+        subscriber_id = request.POST.get('subscriber_id')
+        email = request.POST.get('email', '').strip()
+        
+        if not email:
+            messages.error(request, 'Email address is required.')
+            return redirect('admin_panel:manage_subscribers')
+        
+        try:
+            if subscriber_id:  # Edit existing
+                subscriber = SubsciberEmail.objects.get(pk=subscriber_id)
+                old_email = subscriber.email
+                subscriber.email = email
+                subscriber.save()
+                messages.success(request, f'Subscriber email updated from {old_email} to {email}.')
+            else:  # Add new
+                SubsciberEmail.objects.create(email=email)
+                messages.success(request, f'Subscriber email {email} added successfully.')
+        
+        except SubsciberEmail.DoesNotExist:
+            messages.error(request, 'Subscriber not found.')
+        except Exception as e:
+            if 'unique constraint' in str(e).lower():
+                messages.error(request, 'This email address is already subscribed.')
+            else:
+                messages.error(request, f'Error saving subscriber: {str(e)}')
+        
+        return redirect('admin_panel:manage_subscribers')
+    
+    def _handle_delete(self, request):
+        subscriber_id = request.POST.get('subscriber_id')
+        
+        try:
+            subscriber = SubsciberEmail.objects.get(pk=subscriber_id)
+            email = subscriber.email
+            subscriber.delete()
+            messages.success(request, f'Subscriber email {email} deleted successfully.')
+        except SubsciberEmail.DoesNotExist:
+            messages.error(request, 'Subscriber not found.')
+        except Exception as e:
+            messages.error(request, f'Error deleting subscriber: {str(e)}')
+        
+        return redirect('admin_panel:manage_subscribers')
+    
+    def _handle_bulk_delete(self, request):
+        selected_ids = request.POST.getlist('selected_ids')
+        
+        if not selected_ids:
+            messages.error(request, 'No subscribers selected for deletion.')
+            return redirect('admin_panel:manage_subscribers')
+        
+        try:
+            deleted_count = SubsciberEmail.objects.filter(id__in=selected_ids).delete()[0]
+            messages.success(request, f'{deleted_count} subscriber email(s) deleted successfully.')
+        except Exception as e:
+            messages.error(request, f'Error deleting subscribers: {str(e)}')
+        
+        return redirect('admin_panel:manage_subscribers')

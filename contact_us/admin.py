@@ -19,7 +19,7 @@ class ContactUsMessageAdmin(admin.ModelAdmin):
     list_filter = ('is_resolved',)
 
 @admin.register(SubsciberEmail)
-class SubsciberEmailAdmin(admin.ModelAdmin):
+class SubscriberEmailAdmin(admin.ModelAdmin):
     list_display = ('email', 'created_at', 'updated_at')
     search_fields = ('email',)
 

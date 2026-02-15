@@ -87,7 +87,7 @@ class APPDownloadLinkView(RetrieveAPIView):
 class LandingPageContentView(RetrieveAPIView):
     serializer_class = LandingPageContentSerializer
     permission_classes = [AllowAny]
-    queryset = LandingPageContent.objects.get(pk=1)
+    queryset = LandingPageContent.objects.last()
 
     def get(self, request, *args, **kwargs):
         try:
