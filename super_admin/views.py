@@ -2149,7 +2149,7 @@ class ManageSubscriberEmailsView(TemplateView):
                 email__icontains=search_query
             )
         
-        # Order by creation date (newest first)
+        # Order by creation date (newest first) - avoid caching
         subscribers = subscribers.order_by('-created_at')
         
         # Paginate results

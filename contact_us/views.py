@@ -11,8 +11,11 @@ class SupportListView(GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         try:
-            supports = Support.objects.last()
-            serializer = self.get_serializer(supports)
+            # Use get_object_or_404 or filter().first() to avoid caching
+            support = Support.objects.filter().last()
+            if not support:
+                return Response({"error": "No support contact found"}, status=status.HTTP_404_NOT_FOUND)
+            serializer = self.get_serializer(support)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -57,42 +60,49 @@ class SubscriberEmailCreateView(GenericAPIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)  
         
 
-class SocialMediaLinkView(RetrieveAPIView):
+class SocialMediaLinkView(GenericAPIView):
     serializer_class = SocialMediaLinkSerializer
     permission_classes = [AllowAny]
-    queryset = SocialMediaLink.objects.last()
 
     def get(self, request, *args, **kwargs):
         try:
-            social_links = self.get_queryset()
-            serializer = self.get_serializer(social_links)
+            # Always query the database fresh, no caching
+            social_link = SocialMediaLink.objects.last()
+            if not social_link:
+                return Response({"error": "No social media links found"}, status=status.HTTP_404_NOT_FOUND)
+            serializer = self.get_serializer(social_link)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class APPDownloadLinkView(RetrieveAPIView):
+class APPDownloadLinkView(GenericAPIView):
     serializer_class = APPDownloadLinkSerializer
     permission_classes = [AllowAny]
-    queryset = APPDownloadLink.objects.last()
 
     def get(self, request, *args, **kwargs):
         try:
-            app_links = self.get_queryset()
-            serializer = self.get_serializer(app_links)
+            # Always query the database fresh, no caching
+            app_link = APPDownloadLink.objects.last()
+            if not app_link:
+                return Response({"error": "No app download links found"}, status=status.HTTP_404_NOT_FOUND)
+            serializer = self.get_serializer(app_link)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
-class LandingPageContentView(RetrieveAPIView):
+class LandingPageContentView(GenericAPIView):
     serializer_class = LandingPageContentSerializer
     permission_classes = [AllowAny]
-    queryset = LandingPageContent.objects.last()
 
     def get(self, request, *args, **kwargs):
         try:
-            landing_content = self.get_queryset()
-            serializer = self.get_serializer(landing_content, context ={'request': request})
+            # Always query the database fresh, no caching
+            landing_content = LandingPageContent.objects.filter().last()
+            if not landing_content:
+                return Response({"error": "No landing page content found"}, status=status.HTTP_404_NOT_FOUND)
+            print(f"Landing content banner title: {landing_content.banner_title}")
+            serializer = self.get_serializer(landing_content, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
