@@ -22,6 +22,7 @@ from rest_framework.permissions import AllowAny
 
 class BusinessCategoryListView(GenericAPIView):
     serializer_class = BusinessCategorySerializer
+    permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
         try:

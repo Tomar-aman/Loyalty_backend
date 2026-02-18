@@ -279,6 +279,7 @@ class CityListView(GenericAPIView):
     """
 
     serializer_class = CitySerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         return City.objects.select_related('country').all().order_by('name')
