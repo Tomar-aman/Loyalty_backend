@@ -384,53 +384,35 @@ class GoogleAuthSerializer(serializers.Serializer):
 #         except Exception as e:
 #             raise serializers.ValidationError(f"Invalid token. {str(e)}")
 
+class AppleNativeAuthSerializer(serializers.Serializer):
+    first_name = serializers.CharField(allow_blank=True, required=False)
+    last_name = serializers.CharField(allow_blank=True, required=False)
+    email = serializers.EmailField()
+    apple_id = serializers.CharField()
+    device_token = serializers.CharField(required=False, allow_blank=True)
 
-class AppleFirebaseAuthSerializer(serializers.Serializer):
-    token = serializers.CharField()
 
     def validate(self, attrs):
-        if not init_firebase():
-            raise serializers.ValidationError("Firebase is not configured.")
-        token = attrs.get("token")
-        if not token:
-            raise serializers.ValidationError("Token is required.")
-
         try:
-            # Step 1: Verify Firebase ID token (already verified by Firebase backend)
-            decoded = auth.verify_id_token(token)
-
-            email = decoded.get("email")
-            uid = decoded.get("uid")
-            name = decoded.get("name", "")
-            provider = decoded.get("firebase", {}).get("sign_in_provider")
-
-            if provider != "apple.com":
-                raise serializers.ValidationError("Invalid provider for this endpoint.")
-
-            first_name = name.split()[0] if name else ""
-            last_name = " ".join(name.split()[1:]) if len(name.split()) > 1 else ""
-
-            # Step 2: Create or get the user
             user, created = User.objects.get_or_create(
-                email=email,
+                email=attrs['email'],
                 defaults={
-                    "first_name": first_name,
-                    "last_name": last_name,
-                    "apple_id": uid,
+                    "first_name": attrs['first_name'],
+                    "last_name": attrs['last_name'],
+                    "apple_id": attrs['apple_id'],
                 }
             )
-
-            # Step 3: Update Apple ID if missing
             if not created and not user.apple_id:
-                user.apple_id = uid
+                user.apple_id = attrs['apple_id']
                 user.save()
-
+            
+            user.device_token = attrs.get('device_token', '') or user.device_token
+            user.save()
             attrs["user"] = user
-            attrs["is_new_user"] = created
+            attrs["is_new_user"] = created  
             return attrs
-
         except Exception as e:
-            raise serializers.ValidationError(f"Invalid Firebase token: {str(e)}")
+            raise serializers.ValidationError("Invalid Apple token", str(e))
 
     
 class ChangePasswordSerializer(serializers.Serializer):

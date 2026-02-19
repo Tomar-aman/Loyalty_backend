@@ -2,7 +2,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from users.models import City, Country, UserSearchHistory
-from users.serializers import CitySerializer, CompleteSignUpSerializer, LogoutSerializer, SignupSerializer, OTPVerificationSerializer, ResendOTPSerializer, UserDetailsSerializer, GoogleAuthSerializer, CountrySerializer, UserSearchHistorySerializer, AppleFirebaseAuthSerializer
+from users.serializers import AppleNativeAuthSerializer, CitySerializer, CompleteSignUpSerializer, LogoutSerializer, SignupSerializer, OTPVerificationSerializer, ResendOTPSerializer, UserDetailsSerializer, GoogleAuthSerializer, CountrySerializer, UserSearchHistorySerializer
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework import filters
@@ -150,11 +150,11 @@ class GoogleLoginView(GenericAPIView):
 
 #         return Response(user_data, status=status.HTTP_200_OK)
 
-class AppleFirebaseLoginView(GenericAPIView):
+class AppleNativeLoginView(GenericAPIView):
     """
     Apple Login View using Firebase
     """
-    serializer_class = AppleFirebaseAuthSerializer
+    serializer_class = AppleNativeAuthSerializer
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
