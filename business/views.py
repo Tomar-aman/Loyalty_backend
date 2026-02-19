@@ -46,10 +46,13 @@ class BusinessListView(GenericAPIView):
         search = self.request.GET.get('search')
         is_featured = self.request.GET.get('is_featured')
         sort = self.request.GET.get('sort')
+        city = self.request.GET.get('city')
         if is_featured:
             qs = qs.filter(is_featured=is_featured)
         if category:
             qs = qs.filter(category_id=category)
+        if city:
+            qs = qs.filter(address__icontains=city)
         if search:
             qs = qs.filter(name__icontains=search)
         if sort == 'asc':
