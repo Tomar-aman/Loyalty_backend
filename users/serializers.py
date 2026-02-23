@@ -387,7 +387,6 @@ class GoogleAuthSerializer(serializers.Serializer):
 class AppleNativeAuthSerializer(serializers.Serializer):
     first_name = serializers.CharField(allow_blank=True, required=False)
     last_name = serializers.CharField(allow_blank=True, required=False)
-    email = serializers.EmailField()
     apple_id = serializers.CharField()
     device_token = serializers.CharField(required=False, allow_blank=True)
 
@@ -395,11 +394,11 @@ class AppleNativeAuthSerializer(serializers.Serializer):
     def validate(self, attrs):
         try:
             user, created = User.objects.get_or_create(
-                email=attrs['email'],
+                apple_id=attrs['apple_id'],
                 defaults={
                     "first_name": attrs['first_name'],
                     "last_name": attrs['last_name'],
-                    "apple_id": attrs['apple_id'],
+                    "email": attrs['email'],
                 }
             )
             if not created and not user.apple_id:
