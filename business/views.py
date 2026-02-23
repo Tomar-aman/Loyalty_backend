@@ -19,18 +19,39 @@ from business.serializers import (
 )
 from django.utils import timezone
 from rest_framework.permissions import AllowAny
+from django.db.models import Count
 
 class BusinessCategoryListView(GenericAPIView):
     serializer_class = BusinessCategorySerializer
     permission_classes = [AllowAny]
 
+    def get_queryset(self):
+        queryset = BusinessCategory.objects.filter(is_active=True)
+
+        filter_type = self.request.query_params.get("type")
+
+        if filter_type == "business":
+            queryset = queryset.annotate(
+                count=Count("businesses")
+            )
+        
+        elif filter_type == "news":
+            queryset = queryset.annotate(
+                count=Count("news_articles")
+            )
+
+        return queryset
+
     def get(self, request, *args, **kwargs):
         try:
-            categories = BusinessCategory.objects.filter(is_active=True)
-            serializer = self.get_serializer(categories, many=True)
+            queryset = self.get_queryset()
+            serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class BusinessListView(GenericAPIView):
     """

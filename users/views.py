@@ -1,6 +1,7 @@
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.db.models import Count
 from users.models import City, Country, UserSearchHistory
 from users.serializers import AppleNativeAuthSerializer, CitySerializer, CompleteSignUpSerializer, LogoutSerializer, SignupSerializer, OTPVerificationSerializer, ResendOTPSerializer, UserDetailsSerializer, GoogleAuthSerializer, CountrySerializer, UserSearchHistorySerializer
 from rest_framework.permissions import AllowAny
@@ -276,6 +277,7 @@ class CityListView(GenericAPIView):
     - Search by city name with ?search=
     - Filter by country id or country code with ?country= or ?country_code=
     - Sort with ?ordering=name or ?ordering=-created_at
+    - Add filter param to get counts: ?filter=users or ?filter=news
     """
 
     serializer_class = CitySerializer

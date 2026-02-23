@@ -27,6 +27,7 @@ class NewsArticle(BaseModel):
         null=True,
         blank=True,
         verbose_name=_("Business Category"),
+        related_name='news_articles',
         help_text=_("The business category this news article relates to"),
     )
     city = models.ForeignKey(
@@ -35,6 +36,7 @@ class NewsArticle(BaseModel):
         null=True,
         blank=True,
         verbose_name=_("City"),
+        related_name='news_articles',
         help_text=_("The city this news article is relevant to"),
     )
     published_at = models.DateTimeField(

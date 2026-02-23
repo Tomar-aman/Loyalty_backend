@@ -4,9 +4,10 @@ from .models import BusinessCategory, Business, BusinessImage, BusinessOffer, Re
 from users.models import User
 
 class BusinessCategorySerializer(serializers.ModelSerializer):
+    count  = serializers.IntegerField(read_only=True)
     class Meta:
         model = BusinessCategory
-        fields = ['id', 'name', 'icon']
+        fields = ['id', 'name', 'count', 'icon']
 
 # small owner serializer
 class OwnerSerializer(serializers.ModelSerializer):
