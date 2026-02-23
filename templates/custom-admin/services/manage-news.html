@@ -26,11 +26,40 @@
         {% endif %}
 
         <div class="scrollableTable">
-          <div class="tableInputFilter">
+          <div class="tableInputFilter maxWidth" style="width: auto; overflow-x: hidden;">
             <form method="GET" class="mb-4">
-              <div class="input-group">
-                <input type="search" class="customInput searchTable" name="search" 
-                       placeholder="Search by title or content" value="{{ search_query }}">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <div class="input-group">
+                    <input type="search" class="customInput searchTable" name="search" 
+                           placeholder="Search by title or content" value="{{ search_query }}">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <select name="category" class="customInput">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                      <option value="{{ cat.id }}" {% if category_filter == cat.id|stringformat:'s' %}selected{% endif %}>
+                        {{ cat.name }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <select name="city" class="customInput">
+                    <option value="">All Cities</option>
+                    {% for city in cities %}
+                      <option value="{{ city.id }}" {% if city_filter == city.id|stringformat:'s' %}selected{% endif %}>
+                        {{ city.name }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <button type="submit" class="customButton w-100">
+                    <i class="fa fa-filter"></i> Filter
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -41,6 +70,8 @@
                 <th>Article ID</th>
                 <th>Icon</th>
                 <th>Title</th>
+                <th>Category</th>
+                <th>City</th>
                 <th>Content Preview</th>
                 <th>Published Date</th>
                 <th>Actions</th>
@@ -61,6 +92,20 @@
                   <strong>{{ article.title|truncatewords:5 }}</strong>
                 </td>
                 <td>
+                  {% if article.category %}
+                    <span class="badge bg-primary">{{ article.category.name }}</span>
+                  {% else %}
+                    <span class="badge bg-light text-dark">No Category</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if article.city %}
+                    <span class="badge bg-info">{{ article.city.name }}</span>
+                  {% else %}
+                    <span class="badge bg-light text-dark">No City</span>
+                  {% endif %}
+                </td>
+                <td>
                   <small>{{ article.content|truncatewords:5 }}</small>
                 </td>
                 <td>{{ article.published_at|date:"d/m/Y H:i" }}</td>
@@ -71,6 +116,10 @@
                           data-news-id="{{ article.id }}"
                           data-title="{{ article.title|escapejs }}"
                           data-content="{{ article.content|escapejs }}"
+                          data-category-id="{% if article.category %}{{ article.category.id }}{% endif %}"
+                          data-category-name="{% if article.category %}{{ article.category.name }}{% endif %}"
+                          data-city-id="{% if article.city %}{{ article.city.id }}{% endif %}"
+                          data-city-name="{% if article.city %}{{ article.city.name }}{% endif %}"
                           data-icon-url="{% if article.icon %}{{ article.icon.url }}{% endif %}"
                           data-published="{{ article.published_at|date:'d/m/Y H:i' }}"
                           data-edit-url="{% url 'admin_panel:news_edit' article.id %}">
@@ -87,7 +136,7 @@
               </tr>
               {% empty %}
               <tr>
-                <td colspan="6" class="text-center">No news articles found.</td>
+                <td colspan="8" class="text-center">No news articles found.</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -100,7 +149,7 @@
               <ul class="pagination">
                 {% if news.has_previous %}
                   <li class="page-item">
-                    <a class="page-link" href="?page={{ news.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                    <a class="page-link" href="?page={{ news.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if city_filter %}&city={{ city_filter }}{% endif %}">
                       <span aria-hidden="true">&laquo;</span>
                     </a>
                   </li>
@@ -108,13 +157,13 @@
 
                 {% for num in news.paginator.page_range %}
                   <li class="page-item {% if news.number == num %}active{% endif %}">
-                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a>
+                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if city_filter %}&city={{ city_filter }}{% endif %}">{{ num }}</a>
                   </li>
                 {% endfor %}
 
                 {% if news.has_next %}
                   <li class="page-item">
-                    <a class="page-link" href="?page={{ news.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                    <a class="page-link" href="?page={{ news.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if city_filter %}&city={{ city_filter }}{% endif %}">
                       <span aria-hidden="true">&raquo;</span>
                     </a>
                   </li>
@@ -151,6 +200,26 @@
             <div class="col-md-12">
               <label class="inputLabel">Article Content <span style="color: red;">*</span></label>
               <textarea name="content" class="customInput" rows="6" placeholder="Enter detailed article content" required></textarea>
+            </div>
+
+            <div class="col-md-6">
+              <label class="inputLabel">Business Category</label>
+              <select name="category" class="customInput">
+                <option value="">Select Category (Optional)</option>
+                {% for cat in categories %}
+                  <option value="{{ cat.id }}">{{ cat.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="inputLabel">City</label>
+              <select name="city" class="customInput">
+                <option value="">Select City (Optional)</option>
+                {% for city in cities %}
+                  <option value="{{ city.id }}">{{ city.name }}</option>
+                {% endfor %}
+              </select>
             </div>
 
             <div class="col-md-12">
@@ -202,6 +271,26 @@
             <div class="col-md-12">
               <label class="inputLabel">Article Content</label>
               <textarea name="content" id="edit_content" class="customInput" rows="6" placeholder="Enter detailed article content"></textarea>
+            </div>
+
+            <div class="col-md-6">
+              <label class="inputLabel">Business Category</label>
+              <select name="category" id="edit_category" class="customInput">
+                <option value="">Select Category (Optional)</option>
+                {% for cat in categories %}
+                  <option value="{{ cat.id }}">{{ cat.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="inputLabel">City</label>
+              <select name="city" id="edit_city" class="customInput">
+                <option value="">Select City (Optional)</option>
+                {% for city in cities %}
+                  <option value="{{ city.id }}">{{ city.name }}</option>
+                {% endfor %}
+              </select>
             </div>
 
             <div class="col-md-12">
@@ -384,6 +473,8 @@ $(document).ready(function() {
         var newsId = $(this).data('news-id');
         var title = $(this).data('title');
         var content = $(this).data('content');
+        var categoryId = $(this).data('category-id');
+        var cityId = $(this).data('city-id');
         var iconUrl = $(this).data('icon-url');
         var published = $(this).data('published');
         var editUrl = $(this).data('edit-url');
@@ -392,6 +483,12 @@ $(document).ready(function() {
         $('#edit_title').val(title);
         $('#edit_content').val(content);
         $('#edit_published_date').text(published);
+        
+        // Set category dropdown
+        $('#edit_category').val(categoryId || '');
+        
+        // Set city dropdown
+        $('#edit_city').val(cityId || '');
 
         // Show current image
         if (iconUrl) {

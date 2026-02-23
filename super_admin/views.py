@@ -1020,8 +1020,11 @@ class NewsListView(TemplateView):
         context = super().get_context_data(**kwargs)
         
         search_query = self.request.GET.get('search', '')
+        category_filter = self.request.GET.get('category', '')
+        city_filter = self.request.GET.get('city', '')
         page = self.request.GET.get('page', 1)
-        news = NewsArticle.objects.all()
+        
+        news = NewsArticle.objects.select_related('category', 'city').all()
         
         if search_query:
             news = news.filter(
@@ -1029,13 +1032,29 @@ class NewsListView(TemplateView):
                 Q(content__icontains=search_query)
             )
         
+        if category_filter:
+            news = news.filter(category_id=category_filter)
+            
+        if city_filter:
+            news = news.filter(city_id=city_filter)
+        
         news = news.order_by('-published_at')
         paginator = Paginator(news, 25)
         news_page = paginator.get_page(page)
 
-        context['news'] = news_page
-        context['search_query'] = search_query
-        context['title'] = 'News Management'
+        # Get all categories and cities for filter dropdowns
+        categories = BusinessCategory.objects.filter(is_active=True).order_by('name')
+        cities = City.objects.all().order_by('name')
+
+        context.update({
+            'news': news_page,
+            'search_query': search_query,
+            'category_filter': category_filter,
+            'city_filter': city_filter,
+            'categories': categories,
+            'cities': cities,
+            'title': 'News Management'
+        })
         return context
 
 
@@ -1045,6 +1064,8 @@ class NewsAddView(View):
         try:
             title = request.POST.get('title')
             content = request.POST.get('content')
+            category_id = request.POST.get('category')
+            city_id = request.POST.get('city')
             icon = request.FILES.get('icon')
             
             # Validation
@@ -1060,10 +1081,27 @@ class NewsAddView(View):
                 messages.error(request, 'Content must be at least 20 characters')
                 return redirect('admin_panel:manage_news')
             
+            # Get category and city objects if provided
+            category = None
+            if category_id:
+                try:
+                    category = BusinessCategory.objects.get(id=category_id)
+                except BusinessCategory.DoesNotExist:
+                    pass
+            
+            city = None
+            if city_id:
+                try:
+                    city = City.objects.get(id=city_id)
+                except City.DoesNotExist:
+                    pass
+            
             # Create news article
             news_article = NewsArticle.objects.create(
                 title=title,
                 content=content,
+                category=category,
+                city=city,
                 icon=icon
             )
             
@@ -1083,6 +1121,26 @@ class NewsEditView(View):
             
             news_article.title = request.POST.get('title', news_article.title)
             news_article.content = request.POST.get('content', news_article.content)
+            
+            # Handle category update
+            category_id = request.POST.get('category')
+            if category_id:
+                try:
+                    news_article.category = BusinessCategory.objects.get(id=category_id)
+                except BusinessCategory.DoesNotExist:
+                    pass
+            else:
+                news_article.category = None
+            
+            # Handle city update
+            city_id = request.POST.get('city')
+            if city_id:
+                try:
+                    news_article.city = City.objects.get(id=city_id)
+                except City.DoesNotExist:
+                    pass
+            else:
+                news_article.city = None
             
             # Handle icon upload
             if 'icon' in request.FILES:
@@ -1130,7 +1188,7 @@ class NewsDeleteView(View):
 class NewsDetailAPIView(View):
     def get(self, request, news_id):
         try:
-            news_article = NewsArticle.objects.get(pk=news_id)
+            news_article = NewsArticle.objects.select_related('category', 'city').get(pk=news_id)
             
             icon_url = ''
             if news_article.icon:
@@ -1143,6 +1201,10 @@ class NewsDetailAPIView(View):
                     'title': news_article.title,
                     'content': news_article.content,
                     'icon_url': icon_url,
+                    'category_id': news_article.category.id if news_article.category else None,
+                    'category_name': news_article.category.name if news_article.category else '',
+                    'city_id': news_article.city.id if news_article.city else None,
+                    'city_name': news_article.city.name if news_article.city else '',
                     'published_at': news_article.published_at.strftime('%Y-%m-%d %H:%M:%S')
                 }
             })

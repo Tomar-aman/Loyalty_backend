@@ -19,12 +19,22 @@ class NewsArticleListView(GenericAPIView):
         
         # Get search parameter from query params
         search = self.request.query_params.get('search', None)
+
+        category = self.request.query_params.get('category', None)
+        city = self.request.query_params.get('city', None)
+
         
         if search:
             # Search in title and content fields (case-insensitive)
             queryset = queryset.filter(
                 Q(title__icontains=search)  #| Q(content__icontains=search)
             )
+        
+        if category:
+            queryset = queryset.filter(category_id=category)
+        
+        if city:
+            queryset = queryset.filter(city_id=city)
         
         return queryset
 
