@@ -384,35 +384,84 @@ class GoogleAuthSerializer(serializers.Serializer):
 #         except Exception as e:
 #             raise serializers.ValidationError(f"Invalid token. {str(e)}")
 
+# class AppleNativeAuthSerializer(serializers.Serializer):
+#     first_name = serializers.CharField(allow_blank=True, required=False)
+#     last_name = serializers.CharField(allow_blank=True, required=False)
+#     email = serializers.EmailField(required=False, allow_blank=True)
+#     apple_id = serializers.CharField()
+#     device_token = serializers.CharField(required=False, allow_blank=True)
+
+
+#     def validate(self, attrs):
+#         try:
+#             user, created = User.objects.get_or_create(
+#                 apple_id=attrs['apple_id'],
+#                 defaults={
+#                     "first_name": attrs['first_name'],
+#                     "last_name": attrs['last_name'],
+#                     "email": attrs['email'],
+#                 }
+#             )
+#             if not created and not user.apple_id:
+#                 user.apple_id = attrs['apple_id']
+#                 user.save()
+            
+#             user.device_token = attrs.get('device_token', '') or user.device_token
+#             user.save()
+#             attrs["user"] = user
+#             attrs["is_new_user"] = created  
+#             return attrs
+#         except Exception as e:
+#             raise serializers.ValidationError("Invalid Apple token", str(e))
+from django.db import transaction
 class AppleNativeAuthSerializer(serializers.Serializer):
-    first_name = serializers.CharField(allow_blank=True, required=False)
-    last_name = serializers.CharField(allow_blank=True, required=False)
     apple_id = serializers.CharField()
+    email = serializers.EmailField(required=False, allow_blank=True)
+    first_name = serializers.CharField(required=False, allow_blank=True)
+    last_name = serializers.CharField(required=False, allow_blank=True)
     device_token = serializers.CharField(required=False, allow_blank=True)
 
-
     def validate(self, attrs):
-        try:
-            user, created = User.objects.get_or_create(
-                apple_id=attrs['apple_id'],
-                defaults={
-                    "first_name": attrs['first_name'],
-                    "last_name": attrs['last_name'],
-                    "email": attrs['email'],
-                }
-            )
-            if not created and not user.apple_id:
-                user.apple_id = attrs['apple_id']
-                user.save()
-            
-            user.device_token = attrs.get('device_token', '') or user.device_token
-            user.save()
-            attrs["user"] = user
-            attrs["is_new_user"] = created  
-            return attrs
-        except Exception as e:
-            raise serializers.ValidationError("Invalid Apple token", str(e))
+        apple_id = attrs.get("apple_id")
+        email = attrs.get("email")
+        device_token = attrs.get("device_token")
 
+        if not apple_id:
+            raise serializers.ValidationError({"apple_id": "Apple ID is required"})
+
+        try:
+            with transaction.atomic():
+                user = User.objects.filter(apple_id=apple_id).first()
+                is_new_user = False
+
+                if not user:
+                    if not email:
+                        raise serializers.ValidationError(
+                            {"email": "Email is required for first time login"}
+                        )
+
+                    user = User.objects.create(
+                        apple_id=apple_id,
+                        email=email,
+                        first_name=attrs.get("first_name", ""),
+                        last_name=attrs.get("last_name", ""),
+                    )
+                    is_new_user = True
+
+                # Update device token only if provided
+                if device_token:
+                    user.device_token = device_token
+                    user.save(update_fields=["device_token"])
+
+                attrs["user"] = user
+                attrs["is_new_user"] = is_new_user
+
+                return attrs
+
+        except Exception as e:
+            raise serializers.ValidationError(
+                {"detail": f"Apple authentication failed: {str(e)}"}
+            )
     
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
